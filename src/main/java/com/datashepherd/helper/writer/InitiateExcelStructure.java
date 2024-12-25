@@ -103,33 +103,37 @@ public class InitiateExcelStructure extends ConditionalMarker {
     private void applyColor(Field field) {
         BiConsumer<Cell,Object> consumer = (cell, value) -> registry.onNext(() -> {
             if(workbook.getNumCellStyles()>=63999) return;
-            ConditionalExcelCellStyle conditionalExcelCellStyle = field.getAnnotation(ConditionalExcelCellStyle.class);
-            Class<? extends ColorCondition> colorConditionClass = conditionalExcelCellStyle.colorCondition();
-            Font font = workbook.createFont();
-            CellStyle style = workbook.createCellStyle();
-            if(Objects.nonNull(colorConditionClass)){
-                try {
-                    ColorCondition colorCondition = colorConditionClass.getDeclaredConstructor().newInstance();
-                    createConditionalCellStyle(colorCondition,value,font);
-                    style.setFont(font);
-                } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
-                         InvocationTargetException e) {
-                    throw new StyleException("Failed to create conditional color", e);
-                }
-            }
-            Class<? extends BackgroundColorCondition> backgroundColorConditionClass = conditionalExcelCellStyle.backgroundColorCondition();
-            if(Objects.nonNull(backgroundColorConditionClass)) {
-                try {
-                    BackgroundColorCondition backgroundColorCondition = backgroundColorConditionClass.getDeclaredConstructor().newInstance();
-                    createConditionalCellStyle(backgroundColorCondition,value, style);
-                } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
-                         InvocationTargetException e) {
-                    throw new StyleException("Failed to create conditional color", e);
-                }
-            }
-            cell.setCellStyle(style);
+            buildColor(cell,value,field);
         });
         conditional.add(new Conditional(field.getName(),consumer));
+    }
+
+    private void buildColor(Cell cell,Object o,Field field){
+        ConditionalExcelCellStyle conditionalExcelCellStyle = field.getAnnotation(ConditionalExcelCellStyle.class);
+        Class<? extends ColorCondition> colorConditionClass = conditionalExcelCellStyle.colorCondition();
+        Font font = workbook.createFont();
+        CellStyle style = workbook.createCellStyle();
+        if(Objects.nonNull(colorConditionClass)){
+            try {
+                ColorCondition colorCondition = colorConditionClass.getDeclaredConstructor().newInstance();
+                createConditionalCellStyle(colorCondition,o,font);
+                style.setFont(font);
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
+                     InvocationTargetException e) {
+                throw new StyleException("Failed to create conditional color", e);
+            }
+        }
+        Class<? extends BackgroundColorCondition> backgroundColorConditionClass = conditionalExcelCellStyle.backgroundColorCondition();
+        if(Objects.nonNull(backgroundColorConditionClass)) {
+            try {
+                BackgroundColorCondition backgroundColorCondition = backgroundColorConditionClass.getDeclaredConstructor().newInstance();
+                createConditionalCellStyle(backgroundColorCondition,o, style);
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
+                     InvocationTargetException e) {
+                throw new StyleException("Failed to create conditional color", e);
+            }
+        }
+        cell.setCellStyle(style);
     }
 
     private static void insertImage(Cell cell, Object o) {

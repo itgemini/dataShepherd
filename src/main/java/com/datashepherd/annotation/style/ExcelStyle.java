@@ -1,8 +1,7 @@
 /**
  * Author: Mohamed Zarrouki
  */
-package com.datashepherd
-.annotation.style;
+package com.datashepherd.annotation.style;
 
 import com.datashepherd.enums.Color;
 import org.apache.poi.ss.usermodel.*;

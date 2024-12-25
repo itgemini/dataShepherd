@@ -179,9 +179,7 @@ public class Writer<T>  implements ExcelStyleHandler {
                         .forEach(conditional -> conditional.processor().accept(cell, value));
                 ExcelColumn column = field.getAnnotation(ExcelColumn.class);
                 if ((StringUtils.isNotBlank(column.format()) || field.isAnnotationPresent(ExcelStyle.class))) {
-                registry.onBefore(() -> {
-                        style(formatHandler,workbook,field,cell,column.format());
-                });
+                registry.onBefore(() -> style(formatHandler,workbook,field,cell,column.format()));
                 }
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 logger.log(Level.WARNING, MESSAGE, structure.name());

@@ -132,7 +132,6 @@ class ExcelService {
         String pathname = StringUtils.contains(path, type.getFileExtension()) ? path : path.concat(".").concat(type.getFileExtension());
         try (FileOutputStream fileOut =  new FileOutputStream(Optional.ofNullable(FileUtils.getFile(pathname)).orElse(new File(pathname)))) {
             workbook.write(fileOut);
-            fileOut.close();
             workbook.close();
         } catch (IOException e) {
             throw new WorkbookException("Error saving workbook to file: ".concat(path), e);
