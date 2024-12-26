@@ -6,7 +6,7 @@
 
     <groupId>io.github.geminit-it</groupId>
     <artifactId>dataShepherd</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
     <name>dataShepherd</name>
     <url>https://github.com/geminit-it</url>
@@ -149,22 +149,22 @@
                                 <!-- Relocate Log4j -->
                                 <relocation>
                                     <pattern>org.apache.logging.log4j</pattern>
-                                    <shadedPattern>your.library.shaded.log4j</shadedPattern>
+                                    <shadedPattern>io.github.geminit-it.log4j</shadedPattern>
                                 </relocation>
                                 <!-- Relocate Apache POI -->
                                 <relocation>
                                     <pattern>org.apache.poi</pattern>
-                                    <shadedPattern>your.library.shaded.poi</shadedPattern>
+                                    <shadedPattern>io.github.geminit-it.poi</shadedPattern>
                                 </relocation>
                                 <!-- Relocate Apache Commons Compress -->
                                 <relocation>
                                     <pattern>org.apache.commons.compress</pattern>
-                                    <shadedPattern>your.library.shaded.commons.compress</shadedPattern>
+                                    <shadedPattern>io.github.geminit-it.commons.compress</shadedPattern>
                                 </relocation>
                                 <!-- Relocate Commons IO -->
                                 <relocation>
                                     <pattern>org.apache.commons.io</pattern>
-                                    <shadedPattern>your.library.shaded.commons.io</shadedPattern>
+                                    <shadedPattern>io.github.geminit-it.commons.io</shadedPattern>
                                 </relocation>
                             </relocations>
                             <minimizeJar>true</minimizeJar>
