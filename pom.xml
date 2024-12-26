@@ -6,7 +6,7 @@
 
     <groupId>io.github.geminit-it</groupId>
     <artifactId>dataShepherd</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
     <name>dataShepherd</name>
     <url>https://github.com/geminit-it</url>
@@ -131,6 +131,44 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <relocations>
+                                <!-- Relocate Log4j -->
+                                <relocation>
+                                    <pattern>org.apache.logging.log4j</pattern>
+                                    <shadedPattern>your.library.shaded.log4j</shadedPattern>
+                                </relocation>
+                                <!-- Relocate Apache POI -->
+                                <relocation>
+                                    <pattern>org.apache.poi</pattern>
+                                    <shadedPattern>your.library.shaded.poi</shadedPattern>
+                                </relocation>
+                                <!-- Relocate Apache Commons Compress -->
+                                <relocation>
+                                    <pattern>org.apache.commons.compress</pattern>
+                                    <shadedPattern>your.library.shaded.commons.compress</shadedPattern>
+                                </relocation>
+                                <!-- Relocate Commons IO -->
+                                <relocation>
+                                    <pattern>org.apache.commons.io</pattern>
+                                    <shadedPattern>your.library.shaded.commons.io</shadedPattern>
+                                </relocation>
+                            </relocations>
+                            <minimizeJar>true</minimizeJar>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
