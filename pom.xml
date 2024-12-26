@@ -4,34 +4,34 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.geminit-it</groupId>
+    <groupId>io.github.itgemini</groupId>
     <artifactId>dataShepherd</artifactId>
     <version>1.0.2</version>
     <packaging>jar</packaging>
     <name>dataShepherd</name>
-    <url>https://github.com/geminit-it</url>
+    <url>https://github.com/itgemini</url>
     <description>
         A Java library to simplify writing and reading Excel files using annotations, supporting styles, images, relationships between sheets, and templates.
     </description>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
-            <url>https://github.com/Geminit-IT/dataShepherd.git/LICENSE</url>
+            <url>https://github.com/itgemini/dataShepherd.git/LICENSE</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
     <scm>
-        <connection>scm:git:git://github.com/Geminit-IT/dataShepherd.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:Geminit-IT/dataShepherd.git</developerConnection>
-        <url>https://github.com/Geminit-IT/dataShepherd</url>
+        <connection>scm:git:git://github.com/itgemini/dataShepherd.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:itgemini/dataShepherd.git</developerConnection>
+        <url>https://github.com/itgemini/dataShepherd</url>
     </scm>
 
     <developers>
         <developer>
-            <id>geminit-it</id>
+            <id>itgemini</id>
             <name>Mohamed Zarrouki</name>
             <email>zarrouki1991@gmail.com</email>
-            <url>https://github.com/geminit-it</url>
+            <url>https://github.com/itgemini</url>
         </developer>
     </developers>
 
@@ -149,22 +149,22 @@
                                 <!-- Relocate Log4j -->
                                 <relocation>
                                     <pattern>org.apache.logging.log4j</pattern>
-                                    <shadedPattern>io.github.geminit-it.log4j</shadedPattern>
+                                    <shadedPattern>io.github.itgemini.log4j</shadedPattern>
                                 </relocation>
                                 <!-- Relocate Apache POI -->
                                 <relocation>
                                     <pattern>org.apache.poi</pattern>
-                                    <shadedPattern>io.github.geminit-it.poi</shadedPattern>
+                                    <shadedPattern>io.github.itgemini.poi</shadedPattern>
                                 </relocation>
                                 <!-- Relocate Apache Commons Compress -->
                                 <relocation>
                                     <pattern>org.apache.commons.compress</pattern>
-                                    <shadedPattern>io.github.geminit-it.commons.compress</shadedPattern>
+                                    <shadedPattern>io.github.itgemini.commons.compress</shadedPattern>
                                 </relocation>
                                 <!-- Relocate Commons IO -->
                                 <relocation>
                                     <pattern>org.apache.commons.io</pattern>
-                                    <shadedPattern>io.github.geminit-it.commons.io</shadedPattern>
+                                    <shadedPattern>io.github.itgemini.commons.io</shadedPattern>
                                 </relocation>
                             </relocations>
                             <minimizeJar>true</minimizeJar>
