@@ -208,9 +208,10 @@ public class WriterService extends ExcelService implements ExcelStyleHandler {
                 style(FormatHandler.getInstance(workbook),workbook,field,cellC,cell.format());
             } else {
                 Row row = Optional.ofNullable(sheet.getRow(cell.firstRow())).orElseGet(()->sheet.createRow(cell.firstRow()));
-                Optional.ofNullable(sheet.getRow(cell.lastRow())).orElseGet(()->sheet.createRow(cell.lastRow()));
+                Row cells = Optional.ofNullable(sheet.getRow(cell.lastRow())).orElseGet(() -> sheet.createRow(cell.lastRow()));
                 org.apache.poi.ss.usermodel.Cell cellC = Optional.ofNullable(row.getCell(cell.firstColumn())).orElseGet(()->row.createCell(cell.firstColumn()));
-                Optional.ofNullable(row.getCell(cell.lastColumn())).orElseGet(()->row.createCell(cell.lastColumn()));
+                org.apache.poi.ss.usermodel.Cell get = Optional.ofNullable(row.getCell(cell.lastColumn())).orElseGet(() -> row.createCell(cell.lastColumn()));
+                if (Objects.isNull(cells) || Objects.isNull(get)) return;
                 CellRangeAddress cellAddresses = new CellRangeAddress(cell.firstRow(),cell.lastRow(),cell.firstColumn(),cell.lastColumn());
                 sheet.addMergedRegionUnsafe(cellAddresses);
                 setInfo(cellC, field, value);
@@ -219,7 +220,7 @@ public class WriterService extends ExcelService implements ExcelStyleHandler {
         }
     }
 
-    private <T> void setInfo(org.apache.poi.ss.usermodel.Cell cellC, Field field, Object value) {
+    private void setInfo(org.apache.poi.ss.usermodel.Cell cellC, Field field, Object value) {
         switch (field.getType().getName()){
             case "java.lang.Integer", "int" -> INTEGER.accept(cellC, value);
             case "java.lang.Double", "double" -> DOUBLE.accept(cellC, value);

@@ -1,8 +1,7 @@
 /**
  * Author: Mohamed Zarrouki
  */
-package com.datashepherd
-.annotation.style;
+package com.datashepherd.annotation.style;
 
 
 import com.datashepherd.helper.writer.style.condional.BackgroundColorCondition;

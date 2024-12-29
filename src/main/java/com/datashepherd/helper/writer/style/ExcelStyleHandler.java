@@ -3,7 +3,6 @@
  */
 package com.datashepherd.helper.writer.style;
 
-import com.datashepherd.annotation.ExcelColumn;
 import com.datashepherd.annotation.style.ExcelStyle;
 import com.datashepherd.exception.StyleException;
 import com.datashepherd.helper.writer.model.FormatHandler;
