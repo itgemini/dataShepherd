@@ -13,7 +13,7 @@ class ReaderTest {
 
     @Test
     void readXlsx() {
-        ReaderService xls = new ReaderService().xlsx("src/test/resources/relationalShipStudent.xlsx");
+        ReaderService xls = new ReaderService().xlsx("src/test/resources/relationalShipStudentCover.xlsx");
         List<Student> students = xls.readFromExcel(Student.class);
         xls.saveExcelTo("src/test/resources/validated_student_data");
         Assertions.assertFalse(students.isEmpty());
