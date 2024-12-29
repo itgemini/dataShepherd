@@ -13,17 +13,17 @@ import java.util.List;
 @Sheet(name = "Student",leftHeader = "Student Data",centerHeader = "Page Number &P",rightHeader = "Page &N of &M")
 public class Student {
     @ExcelColumn(position = 1)
-    private int IdStudent;
+    private final int IdStudent;
     @ExcelColumn(position = 3)
-    private String name;
+    private final String name;
     @ExcelColumn(position = 4)
-    private String email;
+    private final String email;
     @ExcelColumn(position = 5)
-    private Integer age;
+    private final Integer age;
     @ExcelColumn(position = 6)
-    private String address;
+    private final String address;
     @ExcelColumn(position = 8)
-    private String phoneNumber;
+    private final String phoneNumber;
     @Child(mappedBy = Course.class, referencedBy = "IdStudent")
     private List<Course> courses;
 
@@ -52,5 +52,29 @@ public class Student {
 
     public void setCourses(List<Course> courses) {
         this.courses = courses;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public List<Course> getCourses() {
+        return courses;
     }
 }

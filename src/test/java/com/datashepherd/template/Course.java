@@ -28,33 +28,33 @@ public class Course {
     @ExcelColumn(headerStyle = @ExcelStyle(backgroundColor = Color.LIGHT_BLUE,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12)))
     @ExcelStyle(backgroundColor = Color.DARK_GREEN,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12))
     @ConditionalExcelCellStyle(colorCondition = ColorConditionalImpl.class, backgroundColorCondition = BackgroundColorConditionImpl.class)
-    private String name;
+    private final String name;
     @ExcelColumn(headerStyle = @ExcelStyle(backgroundColor = Color.LIGHT_BLUE,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12)))
     @ExcelStyle(backgroundColor = Color.BLUE_GREY,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12))
-    private int score;
+    private final int score;
     @Parent(reference = "IdStudent")
     @ExcelColumn(headerStyle = @ExcelStyle(backgroundColor = Color.LIGHT_BLUE,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12)))
     @ExcelStyle(backgroundColor = Color.BROWN,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12))
-    private int IdStudent;
+    private final int IdStudent;
     @ExcelColumn(headerStyle = @ExcelStyle(backgroundColor = Color.LIGHT_BLUE,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12)))
     @ExcelStyle(backgroundColor = Color.AUTOMATIC,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12))
     @ValidationStatus(status = DataStatusConditionImpl.class)
-    private String description;
+    private final String description;
     @ExcelColumn(format = DateFormat.FULL_DATE_TIME,headerStyle = @ExcelStyle(backgroundColor = Color.LIGHT_BLUE,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12)))
     @ExcelStyle(backgroundColor = Color.CORAL,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12))
-    private LocalDateTime startDate;
+    private final LocalDateTime startDate;
     @ExcelColumn(format = DateFormat.FULL_DATE,headerStyle = @ExcelStyle(backgroundColor = Color.LIGHT_BLUE,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12)))
     @ExcelStyle(backgroundColor = Color.INDIGO,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12))
-    private LocalDate endDate;
+    private final LocalDate endDate;
     @ExcelColumn(format = CurrencyFormat.US_DOLLAR,headerStyle = @ExcelStyle(backgroundColor = Color.LIGHT_BLUE,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12)))
     @ExcelStyle(backgroundColor = Color.LAVENDER,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12))
-    private Double price;
+    private final Double price;
     @ExcelColumn(format = PercentageFormat.PERCENTAGE_WITH_DECIMALS,headerStyle = @ExcelStyle(backgroundColor = Color.LIGHT_BLUE,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12)))
     @ExcelStyle(backgroundColor = Color.DARK_TEAL,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12))
-    private Double level;
+    private final Double level;
     @ExcelColumn(format = PercentageFormat.PERCENTAGE,headerStyle = @ExcelStyle(backgroundColor = Color.LIGHT_BLUE,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12)))
     @ExcelStyle(backgroundColor = Color.LIME,horizontalAlignment = HorizontalAlignment.LEFT,font = @Font(color = Color.WHITE,fontHeightInPoints = 12))
-    private Integer order;
+    private final Integer order;
 
     public Course(String name, int score, int idStudent, String description, LocalDateTime startDate, LocalDate endDate, Double price, Double level, Integer order) {
         this.name = name;
@@ -66,5 +66,41 @@ public class Course {
         this.price = price;
         this.level = level;
         this.order = order;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public int getIdStudent() {
+        return IdStudent;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public LocalDateTime getStartDate() {
+        return startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public Double getLevel() {
+        return level;
+    }
+
+    public Integer getOrder() {
+        return order;
     }
 }

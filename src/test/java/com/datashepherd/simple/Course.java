@@ -7,18 +7,6 @@ package com.datashepherd
 import com.datashepherd.annotation.ExcelColumn;
 import com.datashepherd.annotation.Parent;
 import com.datashepherd.annotation.Sheet;
-import com.datashepherd.annotation.ValidationStatus;
-import com.datashepherd.annotation.style.ConditionalExcelCellStyle;
-import com.datashepherd.annotation.style.ExcelStyle;
-import com.datashepherd.annotation.style.Font;
-import com.datashepherd.enums.Color;
-import com.datashepherd.enums.CurrencyFormat;
-import com.datashepherd.enums.DateFormat;
-import com.datashepherd.enums.PercentageFormat;
-import com.datashepherd.service.BackgroundColorConditionImpl;
-import com.datashepherd.service.ColorConditionalImpl;
-import com.datashepherd.service.DataStatusConditionImpl;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,24 +14,24 @@ import java.time.LocalDateTime;
 @Sheet(name = "Course")
 public class Course {
     @ExcelColumn
-    private String name;
+    private final String name;
     @ExcelColumn
-    private int score;
+    private final int score;
     @Parent(reference = "IdStudent")
     @ExcelColumn
-    private int IdStudent;
+    private final int IdStudent;
     @ExcelColumn
-    private String description;
+    private final String description;
     @ExcelColumn
-    private LocalDateTime startDate;
+    private final LocalDateTime startDate;
     @ExcelColumn
-    private LocalDate endDate;
+    private final LocalDate endDate;
     @ExcelColumn
-    private Double price;
+    private final Double price;
     @ExcelColumn
-    private Double level;
+    private final Double level;
     @ExcelColumn
-    private Integer order;
+    private final Integer order;
 
     public Course(String name, int score, int idStudent, String description, LocalDateTime startDate, LocalDate endDate, Double price, Double level, Integer order) {
         this.name = name;
@@ -55,5 +43,41 @@ public class Course {
         this.price = price;
         this.level = level;
         this.order = order;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public int getIdStudent() {
+        return IdStudent;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public LocalDateTime getStartDate() {
+        return startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public Double getLevel() {
+        return level;
+    }
+
+    public Integer getOrder() {
+        return order;
     }
 }

@@ -21,6 +21,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -188,21 +189,22 @@ public class WriterService extends ExcelService implements ExcelStyleHandler {
         for (Field field : template.getClass().getDeclaredFields()) {
             try {
                if(!(workbook instanceof SXSSFWorkbook)) updateTemplate(field, template, sheet);
-            } catch (IllegalAccessException e) {
+            } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                 throw new WriteException(MESSAGE, e);
             }
         }
         return this;
     }
 
-    private <T> void updateTemplate(Field field,T template,org.apache.poi.ss.usermodel.Sheet sheet) throws IllegalAccessException {
+    private <T> void updateTemplate(Field field, T template, org.apache.poi.ss.usermodel.Sheet sheet) throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         if(field.isAnnotationPresent(Cell.class)) {
+            var clazz = template.getClass();
             Cell cell = field.getAnnotation(Cell.class);
-            field.setAccessible(true);
+            var value = clazz.getDeclaredMethod("get".concat(StringUtils.capitalize(field.getName()))).invoke(template);
             if(Math.addExact(Math.addExact(cell.firstRow(), cell.lastRow()),Math.addExact(cell.firstColumn(), cell.lastColumn()))==0){
                 Row row = Optional.ofNullable(sheet.getRow(cell.row())).orElseGet(()->sheet.createRow(cell.row()));
                 org.apache.poi.ss.usermodel.Cell cellC = Optional.ofNullable(row.getCell(cell.column())).orElseGet(()->row.createCell(cell.column()));
-                setInfo(cellC,field,template);
+                setInfo(cellC, field, value);
                 style(FormatHandler.getInstance(workbook),workbook,field,cellC,cell.format());
             } else {
                 Row row = Optional.ofNullable(sheet.getRow(cell.firstRow())).orElseGet(()->sheet.createRow(cell.firstRow()));
@@ -211,24 +213,25 @@ public class WriterService extends ExcelService implements ExcelStyleHandler {
                 Optional.ofNullable(row.getCell(cell.lastColumn())).orElseGet(()->row.createCell(cell.lastColumn()));
                 CellRangeAddress cellAddresses = new CellRangeAddress(cell.firstRow(),cell.lastRow(),cell.firstColumn(),cell.lastColumn());
                 sheet.addMergedRegionUnsafe(cellAddresses);
-                setInfo(cellC,field,template);
+                setInfo(cellC, field, value);
                 style(FormatHandler.getInstance(workbook),workbook,field,cellC,cell.format());
             }
         }
     }
 
-    private <T> void setInfo(org.apache.poi.ss.usermodel.Cell cellC,Field field,T template) throws IllegalAccessException {
+    private <T> void setInfo(org.apache.poi.ss.usermodel.Cell cellC, Field field, Object value) {
         switch (field.getType().getName()){
-            case "java.lang.Integer","int" -> INTEGER.accept(cellC,field.get(template));
-            case "java.lang.Double","double" -> DOUBLE.accept(cellC,field.get(template));
-            case "java.lang.Float","float" -> FLOAT.accept(cellC,field.get(template));
-            case "java.lang.Long","long" -> LONG.accept(cellC,field.get(template));
-            case "java.lang.Boolean","boolean" -> BOOLEAN.accept(cellC,field.get(template));
-            case "java.lang.Date","date" -> DATE.accept(cellC,field.get(template));
-            case "java.time.LocalDate" -> LOCAL_DATE.accept(cellC,field.get(template));
-            case "java.time.LocalDateTime" -> LOCAL_DATE_TIME.accept(cellC,field.get(template));
-            case "java.lang.String" -> TEXT.accept(cellC,field.get(template));
-            case "java.lang.Byte[]","byte[]","[B" -> IMAGE.accept(cellC,field.isAnnotationPresent(Image.class)? Pair.of(field.getAnnotation(Image.class),field.get(template)):field.get(template));
+            case "java.lang.Integer", "int" -> INTEGER.accept(cellC, value);
+            case "java.lang.Double", "double" -> DOUBLE.accept(cellC, value);
+            case "java.lang.Float", "float" -> FLOAT.accept(cellC, value);
+            case "java.lang.Long", "long" -> LONG.accept(cellC, value);
+            case "java.lang.Boolean", "boolean" -> BOOLEAN.accept(cellC, value);
+            case "java.lang.Date", "date" -> DATE.accept(cellC, value);
+            case "java.time.LocalDate" -> LOCAL_DATE.accept(cellC, value);
+            case "java.time.LocalDateTime" -> LOCAL_DATE_TIME.accept(cellC, value);
+            case "java.lang.String" -> TEXT.accept(cellC, value);
+            case "java.lang.Byte[]", "byte[]", "[B" ->
+                    IMAGE.accept(cellC, field.isAnnotationPresent(Image.class) ? Pair.of(field.getAnnotation(Image.class), value) : value);
             default -> throw new IllegalStateException("Unexpected value: " + field.getType().getName());
         }
     }

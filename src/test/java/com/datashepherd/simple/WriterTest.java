@@ -13,7 +13,7 @@ class WriterTest {
     @Test
     void writeSimpleStudentTable() {
         List<Student> data = MockDataGenerator.generateSimpleStudentList(1000);
-        new WriterService().xlsx().writeToExcel(data,Student.class).saveExcelTo("src/test/resources/simple/simple.xlsx");
+        new WriterService().xlsx().writeToExcel(data, Student.class).saveExcelTo("src/test/resources/simple.xlsx");
     }
 
     @Test
@@ -31,7 +31,7 @@ class WriterTest {
     @Test
     void writeRelationalShipStudentTable() {
         List<Student> data = MockDataGenerator.generateRelationalShipStudentList(1000);
-        new WriterService().xlsx().writeToExcel(data,Student.class).saveExcelTo("src/test/resources/simple/relationalShipStudent.xlsx");
+        new WriterService().xlsx().writeToExcel(data, Student.class).saveExcelTo("src/test/resources/relationalShipStudent.xlsx");
     }
 
     @Test
@@ -49,7 +49,7 @@ class WriterTest {
     @Test
     void writeRelationalShipStudentTableWithCover() {
         List<Student> data = MockDataGenerator.generateRelationalShipStudentList(1000);
-        new WriterService().xlsx().cover(MockDataGenerator.profile()).writeToExcel(data,Student.class).saveExcelTo("src/test/resources/simple/relationalShipStudentCover.xlsx");
+        new WriterService().xlsx().cover(MockDataGenerator.profile()).writeToExcel(data, Student.class).saveExcelTo("src/test/resources/relationalShipStudentCover.xlsx");
     }
 
     @Test

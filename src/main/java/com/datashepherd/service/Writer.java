@@ -20,6 +20,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -170,8 +171,7 @@ public class Writer<T>  implements ExcelStyleHandler {
         elements.structures().forEach(structure -> {
             try {
                 Field field = clazz.getDeclaredField(structure.name());
-                field.setAccessible(true);
-                var value = field.get(o);
+                var value = clazz.getDeclaredMethod("get".concat(StringUtils.capitalize(structure.name()))).invoke(o);
                 var cell = cells.createCell(structure.order());
                 structure.processor().accept(cell, field.isAnnotationPresent(Image.class)? Pair.of(field.getAnnotation(Image.class),value):value);
                 elements.conditional().stream()
@@ -183,8 +183,10 @@ public class Writer<T>  implements ExcelStyleHandler {
                         style(formatHandler,workbook,field,cell,column.format());
                 });
                 }
-            } catch (NoSuchFieldException | IllegalAccessException e) {
+            } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException |
+                     NoSuchFieldException e) {
                 logger.log(Level.WARNING, MESSAGE, structure.name());
+                logger.log(Level.WARNING, e, e::getMessage);
             }
         });
     }
@@ -194,9 +196,7 @@ public class Writer<T>  implements ExcelStyleHandler {
         var clazz = o.getClass();
         elements.children().forEach(child -> {
             try {
-                Field field = clazz.getDeclaredField(child.name());
-                field.setAccessible(true);
-                var value = field.get(o);
+                var value = clazz.getDeclaredMethod("get".concat(StringUtils.capitalize(child.name()))).invoke(o);
                 if (Object.class.isAssignableFrom(clazz) && value instanceof Collection<?> list) {
                     List<Object> sub = writers.getOrDefault(child.mappedBy(), new ArrayList<>());
                     sub.addAll(list.stream()
@@ -208,8 +208,9 @@ public class Writer<T>  implements ExcelStyleHandler {
                     sub.add(value);
                     writers.put((Class<Object>) child.mappedBy(),sub);
                 }
-            } catch (NoSuchFieldException | IllegalAccessException e) {
+            } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                 logger.log(Level.WARNING, MESSAGE, child.name());
+                logger.log(Level.WARNING, e, e::getMessage);
             }
         });
     }

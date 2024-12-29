@@ -32,7 +32,7 @@ class WriterTest {
     @Test
     void writeRelationalShipStudentTableWithCover() {
         List<Student> data = MockDataGenerator.generateRelationalShipStudentList(1000);
-        new WriterService().xlsx("src/test/resources/template.xlsx").cover(MockDataGenerator.profile()).writeToExcel(data, Student.class).saveExcelTo("src/test/resources/template/relationalShipStudentCover.xlsx");
+        new WriterService().xlsx().cover(MockDataGenerator.profile()).writeToExcel(data, Student.class).saveExcelTo("src/test/resources/relationalShipStudentCover.xlsx");
     }
 
     @Test
