@@ -60,9 +60,7 @@ public class Processor<T> {
     }
 
     private Field getReferencedByField(Children children) throws NoSuchFieldException {
-        Field referencedBy = children.mappedBy().getDeclaredField(children.referencedBy());
-        referencedBy.setAccessible(true);
-        return referencedBy;
+        return children.mappedBy().getDeclaredField(children.referencedBy());
     }
 
     private Parent getReferenceAnnotation(Field referencedBy) throws ReadException {
@@ -71,9 +69,7 @@ public class Processor<T> {
     }
 
     private Field getAccessibleField(String reference) throws NoSuchFieldException {
-        Field parentField = entityClass.getDeclaredField(reference);
-        parentField.setAccessible(true);
-        return parentField;
+        return entityClass.getDeclaredField(reference);
     }
 
     private void setCollectionField(T parent, Children children, Collection<?> list, Field referencedBy, Field parentField, Field mapper) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
