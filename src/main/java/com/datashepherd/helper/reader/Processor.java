@@ -88,8 +88,8 @@ public class Processor<T> {
         Stream<?> abstractCollection = list.stream()
                 .filter(child -> {
                     try {
-                        return Objects.equals(parentField.get(parent), referencedBy.get(child));
-                    } catch (IllegalAccessException e) {
+                        return Objects.equals(parent.getClass().getDeclaredMethod("get".concat(StringUtils.capitalize(parentField.getName()))).invoke(parent), child.getClass().getDeclaredMethod("get".concat(StringUtils.capitalize(referencedBy.getName()))).invoke(child));
+                    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                         throw new ReadException("Failed to read child referencedBy", e);
                     }
                 });

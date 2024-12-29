@@ -4,7 +4,9 @@
 package com.datashepherd.annotation.style;
 
 import com.datashepherd.enums.Color;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
