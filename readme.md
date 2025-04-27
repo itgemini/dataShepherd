@@ -444,5 +444,8 @@ public class DataStatusConditionImpl implements DataStatusCondition {
 Contributions are welcome! Please submit pull requests or report issues to improve the library.
 
 ## License
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This library is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for more details.
 
