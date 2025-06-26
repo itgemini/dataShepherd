@@ -17,15 +17,15 @@ public class XMLReader {
     /**
      * Reads an XML file and maps it to an object of the specified class.
      *
-     * @param filePath the XML file path.
+     * @param input the XML file path.
      * @param clazz    the class type to map to.
      * @param <T>      the type parameter.
      * @return the mapped object.
      * @throws XMLAPIException if reading fails.
      */
-    public <T> T read(String filePath, Class<T> clazz) throws XMLAPIException {
+    public <T> T read(Object input, Class<T> clazz) throws XMLAPIException {
         XMLParsingStrategy<T> parsingStrategy = new SAXParsingStrategy<>();
-        XMLReaderCommand<T> readerCommand = new XMLReaderCommand<>(filePath, clazz, parsingStrategy);
+        XMLReaderCommand<T> readerCommand = new XMLReaderCommand<>(input, clazz, parsingStrategy);
         invoker.addCommand(readerCommand);
         invoker.executeCommands();
         warningHandler = parsingStrategy.getWarningHandler();
