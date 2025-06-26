@@ -4,12 +4,14 @@ import com.datashepherd.xml.annotation.XMLAttribute;
 import com.datashepherd.xml.annotation.XMLElement;
 import com.datashepherd.xml.annotation.XMLRoot;
 import com.datashepherd.xml.annotation.XMLValue;
+import com.datashepherd.xml.exception.Issue;
 import com.datashepherd.xml.exception.XMLAPIException;
-import com.datashepherd.xml.exception.XMLWarningHandler;
+import com.datashepherd.xml.exception.XMLIssueReport;
 import com.datashepherd.xml.pattern.XMLObjectFactory;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.xml.stream.Location;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
@@ -25,13 +27,16 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
+import static com.datashepherd.xml.exception.IssueKey.*;
+
 public class ConcurrentProcessor<T> {
 
     private final Deque<StackFrame> stack = new ConcurrentLinkedDeque<>();
     private final ReentrantLock stackLock = new ReentrantLock(true);
     private final Class<T> rootClass;
     private final XMLEventReader eventReader;
-    private final XMLWarningHandler warningHandler = new XMLWarningHandler();
+    private final XMLIssueReport report = new XMLIssueReport();
+    private Location location;
     private T result;
 
     public ConcurrentProcessor(Class<T> rootClass, XMLEventReader eventReader) {
@@ -77,8 +82,8 @@ public class ConcurrentProcessor<T> {
         return result;
     }
 
-    public XMLWarningHandler getWarningHandler() {
-        return warningHandler;
+    public XMLIssueReport getReport() {
+        return report;
     }
 
     /**
@@ -88,10 +93,12 @@ public class ConcurrentProcessor<T> {
         while (eventReader.hasNext()) {
             try {
                 XMLEvent event = eventReader.peek();
+                location = event.getLocation();
                 if (event.isEndDocument()) break;
                 handleXmlEvent(event);
             } catch (XMLStreamException streamEx) {
-                warningHandler.addWarning(String.format("XML parsing error, Line number %s Column number %s, cause %s ", streamEx.getLocation().getLineNumber(), streamEx.getLocation().getColumnNumber(), streamEx.getMessage()));
+                String message = String.format("XML parsing error, Line number %s Column number %s, cause %s ", streamEx.getLocation().getLineNumber(), streamEx.getLocation().getColumnNumber(), streamEx.getMessage());
+                report.addErrors(Issue.builder().key(XML_PARSING_ERROR).variables(List.of(Map.entry("line_number", streamEx.getLocation().getLineNumber()), Map.entry("column_number", streamEx.getLocation().getLineNumber()), Map.entry("message", streamEx.getMessage()))).message(message));
                 consumeProblemEvent();
                 break;
             }
@@ -124,7 +131,8 @@ public class ConcurrentProcessor<T> {
         try {
             eventReader.nextEvent();
         } catch (XMLStreamException e) {
-            warningHandler.addWarning(String.format("Failed consuming error event, Line number %s Column number %s, cause %s ", e.getLocation().getLineNumber(), e.getLocation().getColumnNumber(), e.getMessage()));
+            String message = String.format("XML parsing error, Line number %s Column number %s, cause %s ", e.getLocation().getLineNumber(), e.getLocation().getColumnNumber(), e.getMessage());
+            report.addErrors(Issue.builder().key(XML_PARSING_ERROR).variables(List.of(Map.entry("line_number", e.getLocation().getLineNumber()), Map.entry("column_number", e.getLocation().getLineNumber()), Map.entry("message", e.getMessage()))).message(message));
         }
     }
 
@@ -160,9 +168,10 @@ public class ConcurrentProcessor<T> {
             pushFrame(startEl.getName().getLocalPart(), rootObj);
             result = rootClass.cast(rootObj);
         } catch (XMLAPIException e) {
-            warningHandler.addWarning(String.format("Cannot create root object cause %s ", e.getMessage()));
+            String message = String.format("Cannot create root object cause %s ", e.getMessage());
+            report.addErrors(Issue.builder().message(message).key(ROOT_OBJECT).variables(List.of(Map.entry("message", e.getMessage()))));
             skipElementText();
-            throw new XMLStreamException(String.format("Cannot create root object cause %s ", e.getMessage()));
+            throw new XMLStreamException(message);
         }
     }
 
@@ -192,7 +201,9 @@ public class ConcurrentProcessor<T> {
             }
         } catch (ReflectiveOperationException | XMLAPIException e) {
             skipElementText();
-            throw new XMLStreamException(String.format("Error handling field name %s cause %s ", field.getName(), e.getMessage()));
+            String message = String.format("Error handling field name %s cause %s ", field.getName(), e.getMessage());
+            report.addErrors(Issue.builder().message(message).variables(List.of(Map.entry("field_name", field.getName()), Map.entry("message", e.getMessage()))));
+            throw new XMLStreamException(message);
         }
     }
 
@@ -254,10 +265,12 @@ public class ConcurrentProcessor<T> {
                 Object val = convertType(field, genericType.getName(), text);
                 collection.add(val);
             } catch (XMLStreamException ex) {
-                warningHandler.addWarning(String.format("Failed to read value, Line number %s Column number %s, cause %s ", ex.getLocation().getLineNumber(), ex.getLocation().getColumnNumber(), ex.getMessage()));
+                String message = String.format("Failed to read value, Line number %s Column number %s, cause %s ", ex.getLocation().getLineNumber(), ex.getLocation().getColumnNumber(), ex.getMessage());
+                report.addWarning(Issue.builder().message(message).key(VALUE).variables(List.of(Map.entry("line_number", ex.getLocation().getLineNumber()), Map.entry("column_number", ex.getLocation().getLineNumber()), Map.entry("message", ex.getMessage()))));
                 break;
             } catch (XMLAPIException ex) {
-                warningHandler.addWarning("Failed to read repeated value: " + ex.getMessage());
+                String message = String.format("Failed to read repeated value: %s", ex.getMessage());
+                report.addWarning(Issue.builder().message(message).key(VALUE).variables(List.of(Map.entry("message", ex.getMessage()))));
                 break;
             }
         }
@@ -272,7 +285,8 @@ public class ConcurrentProcessor<T> {
         try {
             peeked = eventReader.peek();
         } catch (XMLStreamException ex) {
-            warningHandler.addWarning(String.format("Error peeking event, Line number %s Column number %s, cause %s ", ex.getLocation().getLineNumber(), ex.getLocation().getColumnNumber(), ex.getMessage()));
+            String message = String.format("Error peeking event, Line number %s Column number %s, cause %s ", ex.getLocation().getLineNumber(), ex.getLocation().getColumnNumber(), ex.getMessage());
+            report.addErrors(Issue.builder().message(message).key(XML_PARSING_ERROR).variables(List.of(Map.entry("line_number", ex.getLocation().getLineNumber()), Map.entry("column_number", ex.getLocation().getLineNumber()), Map.entry("message", ex.getMessage()))));
             return false;
         }
         if (peeked == null) {
@@ -311,16 +325,24 @@ public class ConcurrentProcessor<T> {
         Stream.of(clazz.getDeclaredFields())
                 .filter(f -> f.isAnnotationPresent(XMLAttribute.class))
                 .forEach(field -> {
-                    String expectedName = Objects.requireNonNull(field.getAnnotation(XMLAttribute.class)).name();
-                    attrList.stream()
+                    XMLAttribute attribute = Objects.requireNonNull(field.getAnnotation(XMLAttribute.class));
+                    String expectedName = attribute.name();
+                    Optional<Attribute> attributeOptional = attrList.stream()
                             .filter(a -> a.getName().getLocalPart().equals(expectedName))
-                            .findFirst()
+                            .findFirst();
+                    if (attribute.required() && attributeOptional.isEmpty()) {
+                        Optional.ofNullable(location).ifPresentOrElse(localization -> report.addErrors(Issue.builder().key(MISSING_ATTRIBUTES).variables(List.of(Map.entry("line_number", localization.getLineNumber()), Map.entry("column_number", localization.getColumnNumber())))), () -> {
+                            report.addErrors(Issue.builder().key(ATTRIBUTES_ERROR).variables(List.of(Map.entry("element_number", stack.size()), Map.entry("element", clazz.getSimpleName()), Map.entry("attribute_name", expectedName))));
+                        });
+                    }
+                    attributeOptional
                             .ifPresent(a -> {
                                 try {
                                     Object val = convertType(field, field.getType().getName(), a.getValue());
                                     invokeSetter(clazz, field, instance, val);
                                 } catch (ReflectiveOperationException | XMLAPIException ex) {
-                                    warningHandler.addWarning("Failed setting attribute '" + expectedName + "': " + ex.getMessage());
+                                    String message = String.format("Failed setting attribute %s %s", expectedName, ex.getMessage());
+                                    report.addErrors(Issue.builder().key(FIELD).message(message).variables(List.of(Map.entry("message", message))));
                                 }
                             });
                 });

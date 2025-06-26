@@ -1,7 +1,7 @@
 package com.datashepherd.xml.helper;
 
 import com.datashepherd.xml.exception.XMLAPIException;
-import com.datashepherd.xml.exception.XMLWarningHandler;
+import com.datashepherd.xml.exception.XMLIssueReport;
 import com.datashepherd.xml.pattern.SAXParsingStrategy;
 import com.datashepherd.xml.pattern.XMLCommandInvoker;
 import com.datashepherd.xml.pattern.XMLParsingStrategy;
@@ -12,7 +12,7 @@ import com.datashepherd.xml.pattern.XMLParsingStrategy;
 public class XMLReader {
 
     private final XMLCommandInvoker invoker = new XMLCommandInvoker();
-    private XMLWarningHandler warningHandler;
+    private XMLIssueReport warningHandler;
 
     /**
      * Reads an XML file and maps it to an object of the specified class.
@@ -37,7 +37,7 @@ public class XMLReader {
      *
      * @return the warning handler.
      */
-    public XMLWarningHandler getWarningHandler() {
+    public XMLIssueReport getWarningHandler() {
         return warningHandler;
     }
 }

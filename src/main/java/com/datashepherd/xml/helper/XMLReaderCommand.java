@@ -4,6 +4,9 @@ import com.datashepherd.xml.exception.XMLAPIException;
 import com.datashepherd.xml.pattern.XMLCommand;
 import com.datashepherd.xml.pattern.XMLParsingStrategy;
 
+import java.io.File;
+import java.io.InputStream;
+
 /**
  * Command for reading XML using a given parsing strategy.
  *
@@ -11,7 +14,7 @@ import com.datashepherd.xml.pattern.XMLParsingStrategy;
  */
 public class XMLReaderCommand<T> implements XMLCommand {
 
-    private final String filePath;
+    private final Object input;
     private final Class<T> clazz;
     private final XMLParsingStrategy<T> parsingStrategy;
     private T result;
@@ -19,19 +22,22 @@ public class XMLReaderCommand<T> implements XMLCommand {
     /**
      * Constructor.
      *
-     * @param filePath        the XML file path.
+     * @param input        the XML file.
      * @param clazz           the class type to map to.
      * @param parsingStrategy the strategy to use for parsing.
      */
-    public XMLReaderCommand(String filePath, Class<T> clazz, XMLParsingStrategy<T> parsingStrategy) {
-        this.filePath = filePath;
+    public XMLReaderCommand(Object input, Class<T> clazz, XMLParsingStrategy<T> parsingStrategy) {
+        this.input = input;
         this.clazz = clazz;
         this.parsingStrategy = parsingStrategy;
     }
 
     @Override
     public void execute() throws XMLAPIException {
-        result = parsingStrategy.parse(filePath, clazz);
+        if (input instanceof String path) result = parsingStrategy.parse(path, clazz);
+        else if (input instanceof File file) result = parsingStrategy.parse(file, clazz);
+        else if (input instanceof InputStream inputStream) result = parsingStrategy.parse(inputStream, clazz);
+        else throw new UnsupportedOperationException();
     }
 
     /**

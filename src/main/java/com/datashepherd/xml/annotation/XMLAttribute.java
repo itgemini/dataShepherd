@@ -17,4 +17,11 @@ public @interface XMLAttribute {
      * @return attribute name.
      */
     String name();
+
+    /**
+     * The XML attribute is required.
+     *
+     * @return attribute is required.
+     */
+    boolean required() default false;
 }
