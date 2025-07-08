@@ -35,6 +35,7 @@ public class Reader<T> extends ConditionalMarker {
     private final List<Structure> structures = new ArrayList<>();
     private final List<Children> subs = new ArrayList<>();
     private final String endSheet;
+    private final Integer skipHeader;
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private static final Function<Cell, Object> TEXT = Cell::getStringCellValue;
     private static final Function<Cell, Object> INTEGER = cell -> (int) cell.getNumericCellValue();
@@ -47,18 +48,19 @@ public class Reader<T> extends ConditionalMarker {
     private static final Function<Cell, Object> LOCAL_DATE_TIME = Cell::getLocalDateTimeCellValue;
 
     public Reader(Workbook workbook, Class<T> entityClass) {
-        super(new Registry(), workbook.getSheet(entityClass.getAnnotation(Sheet.class).name()));
+        super(new Registry(), workbook.getSheet(Objects.requireNonNull(entityClass.getAnnotation(Sheet.class)).name()));
         if (!entityClass.isAnnotationPresent(Sheet.class)) {
             throw new ReadException("Entity class does not have a Sheet annotation");
         }
-        this.endSheet = entityClass.getAnnotation(Sheet.class).endSheet();
+        this.endSheet = Objects.requireNonNull(entityClass.getAnnotation(Sheet.class)).endSheet();
+        this.skipHeader = Objects.requireNonNull(entityClass.getAnnotation(Sheet.class)).skipHeader();
         this.entityClass = entityClass;
         createStructure();
     }
 
     private void createStructure() {
         if(Stream.of(entityClass.getDeclaredFields()).filter(field -> field.isAnnotationPresent(ExcelColumn.class))
-                .allMatch(field -> field.getAnnotation(ExcelColumn.class).position()==0)){
+                .allMatch(field -> Objects.requireNonNull(field.getAnnotation(ExcelColumn.class)).position() == 0)) {
             AtomicInteger order = new AtomicInteger(0);
             for (Field field : entityClass.getDeclaredFields()) {
                 if (field.isAnnotationPresent(ExcelColumn.class) || field.isAnnotationPresent(Child.class)) {
@@ -68,7 +70,7 @@ public class Reader<T> extends ConditionalMarker {
         }else {
             for (Field field : entityClass.getDeclaredFields()) {
                 if (field.isAnnotationPresent(ExcelColumn.class) || field.isAnnotationPresent(Child.class)) {
-                    fieldStructure(field.getAnnotation(ExcelColumn.class).position(), field);
+                    fieldStructure(Objects.requireNonNull(field.getAnnotation(ExcelColumn.class)).position(), field);
                 }
             }
         }
@@ -91,7 +93,8 @@ public class Reader<T> extends ConditionalMarker {
             case "java.time.LocalDateTime" -> structures.add(new Structure(field.getName(), order, LOCAL_DATE_TIME, LocalDateTime.class));
             case "java.lang.String" -> structures.add(new Structure(field.getName(), order, TEXT,String.class));
             default -> {
-                if(field.isAnnotationPresent(Child.class)) subs.add(new Children(field.getName(),field.getAnnotation(Child.class).mappedBy(),field.getAnnotation(Child.class).referencedBy()));
+                if (field.isAnnotationPresent(Child.class))
+                    subs.add(new Children(field.getName(), Objects.requireNonNull(field.getAnnotation(Child.class)).mappedBy(), Objects.requireNonNull(field.getAnnotation(Child.class)).referencedBy()));
                 else logger.warning("Unsupported data type");
             }
         }
@@ -103,7 +106,7 @@ public class Reader<T> extends ConditionalMarker {
     public List<T> read() {
         List<T> parents = StreamSupport.stream(sheet.spliterator(), false)
                 .takeWhile(row -> row.cellIterator().hasNext() && !StreamSupport.stream(Spliterators.spliteratorUnknownSize(row.cellIterator(), Spliterator.ORDERED), false).map(Cell::getCellType).allMatch(type -> type.equals(CellType.BLANK) || type.equals(CellType._NONE)) && !(StringUtils.isNoneBlank(endSheet) && row.cellIterator().next().getCellType().equals(CellType.STRING) && row.cellIterator().next().getStringCellValue().equals(endSheet)))
-                .skip(1)
+                .skip(skipHeader)
                 .map(cells -> {
                     try {
                         return readRow(cells);

@@ -51,6 +51,11 @@ public @interface Sheet {
     String endSheet() default "";
 
     /**
+     * Defines how many lines should be skipped at the beginning when reading.
+     */
+    int skipHeader() default 0;
+
+    /**
      * Specifies the path to the image.
      * Positioning is required, including start and end columns and rows.
      */
