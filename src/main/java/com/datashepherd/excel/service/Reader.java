@@ -22,7 +22,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -105,7 +108,9 @@ public class Reader<T> extends ConditionalMarker {
 
     public List<T> read() {
         List<T> parents = StreamSupport.stream(sheet.spliterator(), false)
-                .takeWhile(row -> row.cellIterator().hasNext() && !StreamSupport.stream(Spliterators.spliteratorUnknownSize(row.cellIterator(), Spliterator.ORDERED), false).map(Cell::getCellType).allMatch(type -> type.equals(CellType.BLANK) || type.equals(CellType._NONE)) && !(StringUtils.isNoneBlank(endSheet) && row.cellIterator().next().getCellType().equals(CellType.STRING) && row.cellIterator().next().getStringCellValue().equals(endSheet)))
+                .takeWhile(row -> row.cellIterator().hasNext()
+                        && !(StringUtils.isNoneBlank(endSheet) && row.cellIterator().next().getCellType().equals(CellType.STRING)
+                        && row.cellIterator().next().getStringCellValue().equals(endSheet)))
                 .skip(skipHeader)
                 .map(cells -> {
                     try {
