@@ -20,12 +20,13 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -33,22 +34,85 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static org.apache.poi.ss.usermodel.CellType.NUMERIC;
+import static org.apache.poi.ss.usermodel.CellType.STRING;
+
 public class Reader<T> extends ConditionalMarker {
     private final Class<T> entityClass;
-    private final List<Structure> structures = new ArrayList<>();
-    private final List<Children> subs = new ArrayList<>();
+    private static final Function<Cell, Optional<Object>> TEXT = cell -> {
+        Object value = getValue(cell);
+        if (Objects.nonNull(value)) return Optional.of(String.valueOf(value));
+        return Optional.empty();
+    };
+    private static final Function<Cell, Optional<Object>> INTEGER = cell -> {
+        Object value = getValue(cell);
+        if (Objects.nonNull(value) && value instanceof Integer object) return Optional.of(object);
+        if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Integer.valueOf(object));
+        return Optional.empty();
+    };
     private final String endSheet;
     private final Integer skipHeader;
     private final Logger logger = Logger.getLogger(this.getClass().getName());
-    private static final Function<Cell, Object> TEXT = Cell::getStringCellValue;
-    private static final Function<Cell, Object> INTEGER = cell -> (int) cell.getNumericCellValue();
-    private static final Function<Cell, Object> DOUBLE = Cell::getNumericCellValue;
-    private static final Function<Cell, Object> FLOAT = cell -> (float) cell.getNumericCellValue();
-    private static final Function<Cell, Object> LONG = cell -> (long) cell.getNumericCellValue();
-    private static final Function<Cell, Object> BOOLEAN = Cell::getBooleanCellValue;
-    private static final Function<Cell, Object> DATE = Cell::getDateCellValue;
-    private static final Function<Cell, Object> LOCAL_DATE = cell -> cell.getLocalDateTimeCellValue().toLocalDate();
-    private static final Function<Cell, Object> LOCAL_DATE_TIME = Cell::getLocalDateTimeCellValue;
+    private static final Function<Cell, Optional<Object>> DOUBLE = cell -> {
+        Object value = getValue(cell);
+        if (Objects.nonNull(value) && value instanceof Double object) return Optional.of(object);
+        if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Double.valueOf(object));
+        return Optional.empty();
+    };
+    private static final Function<Cell, Optional<Object>> FLOAT = cell -> {
+        Object value = getValue(cell);
+        if (Objects.nonNull(value) && value instanceof Float object) return Optional.of(object);
+        if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Float.valueOf(object));
+        return Optional.empty();
+    };
+    private static final Function<Cell, Optional<Object>> LONG = cell -> {
+        Object value = getValue(cell);
+        if (Objects.nonNull(value) && value instanceof Long object) return Optional.of(object);
+        if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Long.valueOf(object));
+        return Optional.empty();
+    };
+    private static final Function<Cell, Optional<Object>> BOOLEAN = cell -> {
+        Object value = getValue(cell);
+        if (Objects.nonNull(value) && value instanceof Boolean object) return Optional.of(object);
+        if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Boolean.valueOf(object));
+        return Optional.empty();
+    };
+    private static final Function<Cell, Optional<Object>> DATE = cell -> {
+        Object value = getValue(cell);
+        if (Objects.nonNull(value) && value instanceof Number) return Optional.of(cell.getDateCellValue());
+        if (Objects.nonNull(value) && value instanceof String object)
+            return Optional.of(Date.from(Instant.parse(object)));
+        return Optional.empty();
+    };
+    private static final Function<Cell, Optional<Object>> LOCAL_DATE = cell -> {
+        Object value = getValue(cell);
+        if (Objects.nonNull(value) && value instanceof Number)
+            return Optional.of(cell.getLocalDateTimeCellValue().toLocalDate());
+        if (Objects.nonNull(value) && value instanceof String object) return Optional.of(LocalDate.parse(object));
+        return Optional.empty();
+    };
+    private static final Function<Cell, Optional<Object>> LOCAL_DATE_TIME = cell -> {
+        Object value = getValue(cell);
+        if (Objects.nonNull(value) && value instanceof Number) return Optional.of(cell.getLocalDateTimeCellValue());
+        if (Objects.nonNull(value) && value instanceof String object) return Optional.of(LocalDateTime.parse(object));
+        return Optional.empty();
+    };
+    private static final String INTEGER_TYPE = "java.lang.Integer";
+    private static final String INT_TYPE = "int";
+    private static final String DOUBLE_WRAPPER_TYPE = "java.lang.Double";
+    private static final String DOUBLE_TYPE = "double";
+    private static final String FLOUT_WRAPPER_TYPE = "java.lang.Float";
+    private static final String FLOUT_TYPE = "float";
+    private static final String LONG_WRAPPER_TYPE = "java.lang.Long";
+    private static final String LONG_TYPE = "long";
+    private static final String BOOLEAN_WRAPPER_TYPE = "java.lang.Boolean";
+    private static final String BOOLEAN_TYPE = "boolean";
+    private static final String DATE_TYPE = "java.util.Date";
+    private static final String LOCAL_DATE_TYPE = "java.time.LocalDate";
+    private static final String LOCAL_DATE_TIME_TYPE = "java.time.LocalDateTime";
+    private static final String STRING_TYPE = "java.lang.String";
+    private final ConcurrentLinkedQueue<Structure> structures = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<Children> subs = new ConcurrentLinkedQueue<>();
 
     public Reader(Workbook workbook, Class<T> entityClass) {
         super(new Registry(), workbook.getSheet(Objects.requireNonNull(entityClass.getAnnotation(Sheet.class)).name()));
@@ -79,22 +143,36 @@ public class Reader<T> extends ConditionalMarker {
         }
     }
 
+    private static Object getValue(Cell cell) {
+        if (NUMERIC.equals(cell.getCellType())) {
+            return cell.getNumericCellValue();
+        } else if (STRING.equals(cell.getCellType())) {
+            return cell.getStringCellValue();
+        } else if (CellType.BOOLEAN.equals(cell.getCellType())) {
+            return cell.getBooleanCellValue();
+        } else {
+            return null;
+        }
+    }
+
     private void fieldStructure(int order, Field field) {
         switch (field.getType().getName()) {
-            case "java.lang.Integer" -> structures.add(new Structure(field.getName(), order, INTEGER,Integer.class));
-            case "int" -> structures.add(new Structure(field.getName(), order, INTEGER,int.class));
-            case "java.lang.Double" -> structures.add(new Structure(field.getName(), order, DOUBLE,Double.class));
-            case "double" -> structures.add(new Structure(field.getName(), order, DOUBLE,double.class));
-            case "java.lang.Float" -> structures.add(new Structure(field.getName(), order, FLOAT,Float.class));
-            case "float" -> structures.add(new Structure(field.getName(), order, FLOAT,float.class));
-            case "java.lang.Long" -> structures.add(new Structure(field.getName(), order, LONG,Long.class));
-            case "long" -> structures.add(new Structure(field.getName(), order, LONG,long.class));
-            case "java.lang.Boolean" -> structures.add(new Structure(field.getName(), order, BOOLEAN,Boolean.class));
-            case "boolean" -> structures.add(new Structure(field.getName(), order, BOOLEAN,boolean.class));
-            case "java.util.Date" -> structures.add(new Structure(field.getName(), order, DATE, Date.class));
-            case "java.time.LocalDate" -> structures.add(new Structure(field.getName(), order, LOCAL_DATE, LocalDate.class));
-            case "java.time.LocalDateTime" -> structures.add(new Structure(field.getName(), order, LOCAL_DATE_TIME, LocalDateTime.class));
-            case "java.lang.String" -> structures.add(new Structure(field.getName(), order, TEXT,String.class));
+            case INTEGER_TYPE -> structures.add(new Structure(field.getName(), order, INTEGER, Integer.class));
+            case INT_TYPE -> structures.add(new Structure(field.getName(), order, INTEGER, int.class));
+            case DOUBLE_WRAPPER_TYPE -> structures.add(new Structure(field.getName(), order, DOUBLE, Double.class));
+            case DOUBLE_TYPE -> structures.add(new Structure(field.getName(), order, DOUBLE, double.class));
+            case FLOUT_WRAPPER_TYPE -> structures.add(new Structure(field.getName(), order, FLOAT, Float.class));
+            case FLOUT_TYPE -> structures.add(new Structure(field.getName(), order, FLOAT, float.class));
+            case LONG_WRAPPER_TYPE -> structures.add(new Structure(field.getName(), order, Reader.LONG, Long.class));
+            case LONG_TYPE -> structures.add(new Structure(field.getName(), order, Reader.LONG, long.class));
+            case BOOLEAN_WRAPPER_TYPE ->
+                    structures.add(new Structure(field.getName(), order, Reader.BOOLEAN, Boolean.class));
+            case BOOLEAN_TYPE -> structures.add(new Structure(field.getName(), order, Reader.BOOLEAN, boolean.class));
+            case DATE_TYPE -> structures.add(new Structure(field.getName(), order, DATE, Date.class));
+            case LOCAL_DATE_TYPE -> structures.add(new Structure(field.getName(), order, LOCAL_DATE, LocalDate.class));
+            case LOCAL_DATE_TIME_TYPE ->
+                    structures.add(new Structure(field.getName(), order, LOCAL_DATE_TIME, LocalDateTime.class));
+            case STRING_TYPE -> structures.add(new Structure(field.getName(), order, TEXT, String.class));
             default -> {
                 if (field.isAnnotationPresent(Child.class))
                     subs.add(new Children(field.getName(), Objects.requireNonNull(field.getAnnotation(Child.class)).mappedBy(), Objects.requireNonNull(field.getAnnotation(Child.class)).referencedBy()));
@@ -105,11 +183,10 @@ public class Reader<T> extends ConditionalMarker {
         validationStatusRegistry(field);
     }
 
-
-    public List<T> read() {
-        List<T> parents = StreamSupport.stream(sheet.spliterator(), false)
+    public ConcurrentLinkedQueue<T> read() {
+        ConcurrentLinkedQueue<T> parents = StreamSupport.stream(sheet.spliterator(), false)
                 .takeWhile(row -> row.cellIterator().hasNext()
-                        && !(StringUtils.isNoneBlank(endSheet) && row.cellIterator().next().getCellType().equals(CellType.STRING)
+                        && !(StringUtils.isNoneBlank(endSheet) && row.cellIterator().next().getCellType().equals(STRING)
                         && row.cellIterator().next().getStringCellValue().equals(endSheet)))
                 .skip(skipHeader)
                 .map(cells -> {
@@ -119,7 +196,7 @@ public class Reader<T> extends ConditionalMarker {
                              IllegalAccessException e) {
                         throw new ReadException("Failed to read row ".concat(String.valueOf(cells.getRowNum())), e);
                     }
-                }).collect(Collectors.toCollection(ArrayList::new));
+                }).collect(Collectors.toCollection(ConcurrentLinkedQueue::new));
         new Processor<>(entityClass,subs,workbook).processChild(parents);
         registry.execute();
         return parents;
@@ -128,18 +205,20 @@ public class Reader<T> extends ConditionalMarker {
     private T readRow(Row row) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         T instance = entityClass.getDeclaredConstructor().newInstance();
         for (Structure structure : structures) {
-            try {
-                Cell cell = row.getCell(structure.order());
-                if(Objects.nonNull(cell)) {
-                    Object apply = structure.processor().apply(cell);
-                    conditional.stream()
-                            .filter(conditional -> conditional.name().equals(structure.name()))
-                            .forEach(conditional -> conditional.processor().accept(cell, apply));
-                    entityClass.getDeclaredMethod("set".concat(StringUtils.capitalize(structure.name())),structure.type())
-                            .invoke(instance, apply);
-                }
-            } catch (Exception e) {
-                throw new ReadException(String.format("Failed to set value of the failed name %s the setter set%s is not found in the class name %s", structure.name(), StringUtils.capitalize(structure.name()), entityClass.getSimpleName()), e);
+            Cell cell = row.getCell(structure.order());
+            if (Objects.nonNull(cell)) {
+                Optional<Object> apply = structure.processor().apply(cell);
+                conditional.stream()
+                        .filter(conditional -> conditional.name().equals(structure.name()))
+                        .forEach(conditional -> conditional.processor().accept(cell, apply));
+                apply.ifPresent(value -> {
+                    try {
+                        entityClass.getDeclaredMethod("set".concat(StringUtils.capitalize(structure.name())), structure.type())
+                                .invoke(instance, value);
+                    } catch (Exception e) {
+                        throw new ReadException(String.format("Failed to set value of the failed name %s from sheet name %s and line number %s, please check your class name %s", structure.name(), sheet.getSheetName(), row.getRowNum(), entityClass.getSimpleName()), e);
+                    }
+                });
             }
         }
         return instance;

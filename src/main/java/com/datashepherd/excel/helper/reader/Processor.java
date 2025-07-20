@@ -14,24 +14,25 @@ import org.apache.poi.ss.usermodel.Workbook;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Processor<T> {
 
     private final Class<T> entityClass;
-    private final List<Children> subs;
+    private final ConcurrentLinkedQueue<Children> subs;
     private final Workbook workbook;
 
-    public Processor(Class<T> entityClass, List<Children> subs, Workbook workbook) {
+    public Processor(Class<T> entityClass, ConcurrentLinkedQueue<Children> subs, Workbook workbook) {
         this.entityClass = entityClass;
         this.subs = subs;
         this.workbook = workbook;
     }
 
-    public void processChild(List<T> parents) {
+    public void processChild(ConcurrentLinkedQueue<T> parents) {
         for (Children children : subs) {
-            Collection<?> list = new Reader<>(workbook, children.mappedBy()).read();
+            ConcurrentLinkedQueue<?> list = new Reader<>(workbook, children.mappedBy()).read();
             for (T parent : parents) {
                 try {
                     processSingleChild(parent, children, list);
@@ -42,7 +43,7 @@ public class Processor<T> {
         }
     }
 
-    private void processSingleChild(T parent, Children children, Collection<?> list) throws ReadException {
+    private void processSingleChild(T parent, Children children, ConcurrentLinkedQueue<?> list) throws ReadException {
         try {
             Field mapper = entityClass.getDeclaredField(children.name());
             Field referencedBy = getReferencedByField(children);

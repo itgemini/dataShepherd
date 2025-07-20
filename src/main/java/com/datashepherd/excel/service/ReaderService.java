@@ -7,6 +7,7 @@ import com.datashepherd.excel.exception.WorkbookException;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ReaderService extends ExcelService {
     /**
@@ -74,11 +75,33 @@ public class ReaderService extends ExcelService {
      *
      * @param <T> The type of the data to be read from the Excel workbook.
      * @param entityClass The class of the data type T, used for reflection in the Reader class to instantiate objects of type T.
-     * @return A list of objects of type T read from the Excel workbook.
+     * @return a fully materialized, unmodifiable List of parsed objects.
+     * Suitable for use in read-only or downstream parallel processing.
      * @throws WorkbookException If the workbook has not been set prior to calling this method.
      */
     public <T> List<T> readFromExcel(Class<T> entityClass) {
         if(workbook == null) {
+            throw new WorkbookException("Workbook is not set");
+        }
+        Reader<T> reader = new Reader<>(workbook, entityClass);
+        return List.copyOf(reader.read());
+    }
+
+    /**
+     * Reads data from the Excel workbook into a ConcurrentLinkedQueue of type T.
+     * This method leverages a generic Reader class to read data from the initialized workbook and return it as a list of objects of type T.
+     * It requires that the workbook has been previously initialized and set. If the workbook is not set, a WorkbookException is thrown.
+     * This method is designed to be flexible and can work with any type of data, provided that the data type T is specified and a corresponding
+     * Reader class is available to handle the conversion from Excel rows to Java objects.
+     *
+     * @param <T>         The type of the data to be read from the Excel workbook.
+     * @param entityClass The class of the data type T, used for reflection in the Reader class to instantiate objects of type T.
+     * @return a live ConcurrentLinkedQueue suitable for real-time processing,
+     * parallel consumers, or queue-style operations.
+     * @throws WorkbookException If the workbook has not been set prior to calling this method.
+     */
+    public <T> ConcurrentLinkedQueue<T> readFromExcelAsync(Class<T> entityClass) {
+        if (workbook == null) {
             throw new WorkbookException("Workbook is not set");
         }
         Reader<T> reader = new Reader<>(workbook, entityClass);
