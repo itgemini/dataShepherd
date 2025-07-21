@@ -46,7 +46,7 @@ public class Reader<T> extends ConditionalMarker {
     };
     private static final Function<Cell, Optional<Object>> INTEGER = cell -> {
         Object value = getValue(cell);
-        if (Objects.nonNull(value) && value instanceof Integer object) return Optional.of(object);
+        if (Objects.nonNull(value) && value instanceof Number object) return Optional.of((int) object);
         if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Integer.valueOf(object));
         return Optional.empty();
     };
@@ -55,7 +55,7 @@ public class Reader<T> extends ConditionalMarker {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private static final Function<Cell, Optional<Object>> DOUBLE = cell -> {
         Object value = getValue(cell);
-        if (Objects.nonNull(value) && value instanceof Double object) return Optional.of(object);
+        if (Objects.nonNull(value) && value instanceof Number object) return Optional.of((double) object);
         if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Double.valueOf(object));
         return Optional.empty();
     };
@@ -67,7 +67,7 @@ public class Reader<T> extends ConditionalMarker {
     };
     private static final Function<Cell, Optional<Object>> LONG = cell -> {
         Object value = getValue(cell);
-        if (Objects.nonNull(value) && value instanceof Long object) return Optional.of(object);
+        if (Objects.nonNull(value) && value instanceof Number object) return Optional.of((long) object);
         if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Long.valueOf(object));
         return Optional.empty();
     };
@@ -157,17 +157,15 @@ public class Reader<T> extends ConditionalMarker {
 
     private void fieldStructure(int order, Field field) {
         switch (field.getType().getName()) {
-            case INTEGER_TYPE -> structures.add(new Structure(field.getName(), order, INTEGER, Integer.class));
-            case INT_TYPE -> structures.add(new Structure(field.getName(), order, INTEGER, int.class));
-            case DOUBLE_WRAPPER_TYPE -> structures.add(new Structure(field.getName(), order, DOUBLE, Double.class));
-            case DOUBLE_TYPE -> structures.add(new Structure(field.getName(), order, DOUBLE, double.class));
-            case FLOUT_WRAPPER_TYPE -> structures.add(new Structure(field.getName(), order, FLOAT, Float.class));
-            case FLOUT_TYPE -> structures.add(new Structure(field.getName(), order, FLOAT, float.class));
-            case LONG_WRAPPER_TYPE -> structures.add(new Structure(field.getName(), order, Reader.LONG, Long.class));
-            case LONG_TYPE -> structures.add(new Structure(field.getName(), order, Reader.LONG, long.class));
-            case BOOLEAN_WRAPPER_TYPE ->
-                    structures.add(new Structure(field.getName(), order, Reader.BOOLEAN, Boolean.class));
-            case BOOLEAN_TYPE -> structures.add(new Structure(field.getName(), order, Reader.BOOLEAN, boolean.class));
+            case INTEGER_TYPE, INT_TYPE -> structures.add(new Structure(field.getName(), order, INTEGER, Integer.TYPE));
+            case DOUBLE_WRAPPER_TYPE, DOUBLE_TYPE ->
+                    structures.add(new Structure(field.getName(), order, DOUBLE, Double.TYPE));
+            case FLOUT_WRAPPER_TYPE, FLOUT_TYPE ->
+                    structures.add(new Structure(field.getName(), order, FLOAT, Float.TYPE));
+            case LONG_WRAPPER_TYPE, LONG_TYPE ->
+                    structures.add(new Structure(field.getName(), order, Reader.LONG, Long.TYPE));
+            case BOOLEAN_WRAPPER_TYPE, BOOLEAN_TYPE ->
+                    structures.add(new Structure(field.getName(), order, Reader.BOOLEAN, Boolean.TYPE));
             case DATE_TYPE -> structures.add(new Structure(field.getName(), order, DATE, Date.class));
             case LOCAL_DATE_TYPE -> structures.add(new Structure(field.getName(), order, LOCAL_DATE, LocalDate.class));
             case LOCAL_DATE_TIME_TYPE ->
