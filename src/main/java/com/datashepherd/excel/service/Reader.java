@@ -46,7 +46,7 @@ public class Reader<T> extends ConditionalMarker {
     };
     private static final Function<Cell, Optional<Object>> INTEGER = cell -> {
         Object value = getValue(cell);
-        if (Objects.nonNull(value) && value instanceof Number object) return Optional.of((int) object);
+        if (Objects.nonNull(value) && value instanceof Number object) return Optional.of(object.intValue());
         if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Integer.valueOf(object));
         return Optional.empty();
     };
@@ -55,19 +55,19 @@ public class Reader<T> extends ConditionalMarker {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private static final Function<Cell, Optional<Object>> DOUBLE = cell -> {
         Object value = getValue(cell);
-        if (Objects.nonNull(value) && value instanceof Number object) return Optional.of((double) object);
+        if (Objects.nonNull(value) && value instanceof Number object) return Optional.of(object.doubleValue());
         if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Double.valueOf(object));
         return Optional.empty();
     };
     private static final Function<Cell, Optional<Object>> FLOAT = cell -> {
         Object value = getValue(cell);
-        if (Objects.nonNull(value) && value instanceof Float object) return Optional.of(object);
+        if (Objects.nonNull(value) && value instanceof Number object) return Optional.of(object.floatValue());
         if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Float.valueOf(object));
         return Optional.empty();
     };
     private static final Function<Cell, Optional<Object>> LONG = cell -> {
         Object value = getValue(cell);
-        if (Objects.nonNull(value) && value instanceof Number object) return Optional.of((long) object);
+        if (Objects.nonNull(value) && value instanceof Number object) return Optional.of(object.longValue());
         if (Objects.nonNull(value) && value instanceof String object) return Optional.of(Long.valueOf(object));
         return Optional.empty();
     };
