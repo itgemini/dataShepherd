@@ -6,6 +6,7 @@ package com.datashepherd.excel.service;
 import com.datashepherd.excel.annotation.Child;
 import com.datashepherd.excel.annotation.ExcelColumn;
 import com.datashepherd.excel.annotation.Sheet;
+import com.datashepherd.excel.exception.ReadENDException;
 import com.datashepherd.excel.exception.ReadException;
 import com.datashepherd.excel.helper.Children;
 import com.datashepherd.excel.helper.ConditionalMarker;
@@ -122,6 +123,7 @@ public class Reader<T> extends ConditionalMarker {
         this.endSheet = Objects.requireNonNull(entityClass.getAnnotation(Sheet.class)).endSheet();
         this.skipHeader = Objects.requireNonNull(entityClass.getAnnotation(Sheet.class)).skipHeader();
         this.entityClass = entityClass;
+        checkEndSheet();
         createStructure();
     }
 
@@ -202,6 +204,15 @@ public class Reader<T> extends ConditionalMarker {
         new Processor<>(entityClass, subs, workbook).processChild(parents);
         registry.execute();
         return parents;
+    }
+
+    private void checkEndSheet() {
+        if (StringUtils.isBlank(endSheet)) return;
+        StreamSupport.stream(sheet.spliterator(), false)
+                .filter(row -> row.cellIterator().hasNext()
+                        && !(StringUtils.isNoneBlank(endSheet) && row.cellIterator().next().getCellType().equals(STRING)
+                        && row.cellIterator().next().getStringCellValue().equals(endSheet)))
+                .findAny().orElseThrow(() -> new ReadENDException(String.format("The %s is missing", endSheet)));
     }
 
     private T readRow(Row row) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
