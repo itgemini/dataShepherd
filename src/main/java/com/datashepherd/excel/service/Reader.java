@@ -207,7 +207,7 @@ public class Reader<T> extends ConditionalMarker {
     }
 
     private void checkEndSheet() {
-        if (StringUtils.isBlank(endSheet)) return;
+        if (Objects.isNull(sheet) || StringUtils.isBlank(endSheet)) return;
         StreamSupport.stream(sheet.spliterator(), false)
                 .filter(row -> row.cellIterator().hasNext()
                         && (StringUtils.isNoneBlank(endSheet) && row.cellIterator().next().getCellType().equals(STRING)
