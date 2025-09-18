@@ -210,7 +210,7 @@ public class Reader<T> extends ConditionalMarker {
         if (StringUtils.isBlank(endSheet)) return;
         StreamSupport.stream(sheet.spliterator(), false)
                 .filter(row -> row.cellIterator().hasNext()
-                        && !(StringUtils.isNoneBlank(endSheet) && row.cellIterator().next().getCellType().equals(STRING)
+                        && (StringUtils.isNoneBlank(endSheet) && row.cellIterator().next().getCellType().equals(STRING)
                         && row.cellIterator().next().getStringCellValue().equals(endSheet)))
                 .findAny().orElseThrow(() -> new ReadENDException(String.format("The %s is missing", endSheet)));
     }
