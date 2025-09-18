@@ -30,9 +30,10 @@ public class ConditionalMarker implements ExcelStyleHandler, ConditionalCellStyl
     protected final Registry registry;
     protected final Workbook workbook;
     protected final Sheet sheet;
-    public ConditionalMarker(final Registry registry, final Sheet sheet) {
+
+    public ConditionalMarker(final Registry registry, Workbook workbook, final Sheet sheet) {
         this.registry = registry;
-        this.workbook = sheet.getWorkbook();
+        this.workbook = workbook;
         this.sheet = sheet;
     }
 

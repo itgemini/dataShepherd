@@ -115,7 +115,7 @@ public class Reader<T> extends ConditionalMarker {
     private final ConcurrentLinkedQueue<Children> subs = new ConcurrentLinkedQueue<>();
 
     public Reader(Workbook workbook, Class<T> entityClass) {
-        super(new Registry(), workbook.getSheet(Objects.requireNonNull(entityClass.getAnnotation(Sheet.class)).name()));
+        super(new Registry(), workbook, workbook.getSheet(Objects.requireNonNull(entityClass.getAnnotation(Sheet.class)).name()));
         if (!entityClass.isAnnotationPresent(Sheet.class)) {
             throw new ReadException("Entity class does not have a Sheet annotation");
         }
@@ -126,6 +126,7 @@ public class Reader<T> extends ConditionalMarker {
     }
 
     private void createStructure() {
+        if (Objects.isNull(sheet)) return;
         if (Stream.of(entityClass.getDeclaredFields()).filter(field -> field.isAnnotationPresent(ExcelColumn.class))
                 .allMatch(field -> Objects.requireNonNull(field.getAnnotation(ExcelColumn.class)).position() == 0)) {
             AtomicInteger order = new AtomicInteger(0);
