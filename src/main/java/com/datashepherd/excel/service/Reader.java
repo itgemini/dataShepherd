@@ -126,7 +126,7 @@ public class Reader<T> extends ConditionalMarker {
     }
 
     private void createStructure() {
-        if(Stream.of(entityClass.getDeclaredFields()).filter(field -> field.isAnnotationPresent(ExcelColumn.class))
+        if (Stream.of(entityClass.getDeclaredFields()).filter(field -> field.isAnnotationPresent(ExcelColumn.class))
                 .allMatch(field -> Objects.requireNonNull(field.getAnnotation(ExcelColumn.class)).position() == 0)) {
             AtomicInteger order = new AtomicInteger(0);
             for (Field field : entityClass.getDeclaredFields()) {
@@ -134,7 +134,7 @@ public class Reader<T> extends ConditionalMarker {
                     fieldStructure(order.getAndIncrement(), field);
                 }
             }
-        }else {
+        } else {
             for (Field field : entityClass.getDeclaredFields()) {
                 if (field.isAnnotationPresent(ExcelColumn.class) || field.isAnnotationPresent(Child.class)) {
                     fieldStructure(Objects.requireNonNull(field.getAnnotation(ExcelColumn.class)).position(), field);
@@ -184,6 +184,7 @@ public class Reader<T> extends ConditionalMarker {
     }
 
     public ConcurrentLinkedQueue<T> read() {
+        if (Objects.isNull(sheet)) return new ConcurrentLinkedQueue<>();
         ConcurrentLinkedQueue<T> parents = StreamSupport.stream(sheet.spliterator(), false)
                 .takeWhile(row -> row.cellIterator().hasNext()
                         && !(StringUtils.isNoneBlank(endSheet) && row.cellIterator().next().getCellType().equals(STRING)
@@ -197,7 +198,7 @@ public class Reader<T> extends ConditionalMarker {
                         throw new ReadException("Failed to read row ".concat(String.valueOf(cells.getRowNum())), e);
                     }
                 }).collect(Collectors.toCollection(ConcurrentLinkedQueue::new));
-        new Processor<>(entityClass,subs,workbook).processChild(parents);
+        new Processor<>(entityClass, subs, workbook).processChild(parents);
         registry.execute();
         return parents;
     }
