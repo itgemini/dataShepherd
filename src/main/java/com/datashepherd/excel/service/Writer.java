@@ -152,7 +152,7 @@ public class Writer<T>  implements ExcelStyleHandler {
                 sheet.setDefaultColumnWidth(structure.order());
             }));
         }
-        return new InitiateExcelStructure(registry, Objects.requireNonNull(sheet), entityClass).getElements();
+        return new InitiateExcelStructure(registry, workbook, Objects.requireNonNull(sheet), entityClass).getElements();
     }
 
     /**

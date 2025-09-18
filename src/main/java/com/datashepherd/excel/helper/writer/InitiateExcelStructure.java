@@ -72,8 +72,8 @@ public class InitiateExcelStructure extends ConditionalMarker {
         }
     }
 
-    public InitiateExcelStructure(final Registry registry, final Sheet sheet, final Class<?> clazz) {
-        super(registry,sheet);
+    public InitiateExcelStructure(final Registry registry, Workbook workbook, final Sheet sheet, final Class<?> clazz) {
+        super(registry, workbook, sheet);
         registryChildren(clazz);
         registryColorConditional(clazz);
         if(Stream.of(clazz.getDeclaredFields()).filter(field -> field.isAnnotationPresent(ExcelColumn.class))
