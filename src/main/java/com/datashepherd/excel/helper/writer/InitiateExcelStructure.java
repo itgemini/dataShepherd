@@ -78,15 +78,16 @@ public class InitiateExcelStructure extends ConditionalMarker {
         registryChildren(clazz);
         registryColorConditional(clazz);
         this.sheetAttributes = sheetAttributes;
+        Row headerRow = sheet.createRow(this.sheetAttributes.headerRow());
         if(Stream.of(clazz.getDeclaredFields()).filter(field -> field.isAnnotationPresent(ExcelColumn.class))
                 .allMatch(field -> field.getAnnotation(ExcelColumn.class).position()==0))
         {
             AtomicInteger order = new AtomicInteger(0);
-            Stream.of(clazz.getDeclaredFields()).forEach(field -> fieldStyle(field,order.getAndIncrement()));
-        }else {
+            Stream.of(clazz.getDeclaredFields()).forEach(field -> fieldStyle(field, order.getAndIncrement(), headerRow));
+        } else {
             Stream.of(clazz.getDeclaredFields())
                     .filter(field -> field.isAnnotationPresent(ExcelColumn.class))
-                    .forEachOrdered(field -> fieldStyle(field,field.getAnnotation(ExcelColumn.class).position()));
+                    .forEachOrdered(field -> fieldStyle(field, field.getAnnotation(ExcelColumn.class).position(), headerRow));
         }
         elements = new Elements(structures,children,conditional);
     }
@@ -148,17 +149,16 @@ public class InitiateExcelStructure extends ConditionalMarker {
         }
     }
 
-    private void fieldStyle(Field field, int order) {
+    private void fieldStyle(Field field, int order, Row headerRow) {
         if (!field.isAnnotationPresent(ExcelColumn.class)) return;
         ExcelColumn column = field.getAnnotation(ExcelColumn.class);
-        createHeaderCell(field, order, column);
+        createHeaderCell(field, order, column, headerRow);
         createStructure(order, field);
         validationStatusRegistry(field);
         validationCommentRegistry(field);
     }
 
-    private void createHeaderCell(Field field, int order, ExcelColumn column) {
-        Row headerRow = sheet.getLastRowNum() == -1 ? sheet.createRow(0) : sheet.createRow(this.sheetAttributes.headerRow());
+    private void createHeaderCell(Field field, int order, ExcelColumn column, Row headerRow) {
         Cell cell = headerRow.createCell(order);
         Font font = sheet.getWorkbook().createFont();
         CellStyle style = sheet.getWorkbook().createCellStyle();
