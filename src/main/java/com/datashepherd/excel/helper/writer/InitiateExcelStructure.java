@@ -156,7 +156,7 @@ public class InitiateExcelStructure extends ConditionalMarker {
     }
 
     private void createHeaderCell(Field field, int order, ExcelColumn column) {
-        Row headerRow = sheet.getLastRowNum() == -1 ? sheet.createRow(0) : sheet.getRow(0);
+        Row headerRow = sheet.getLastRowNum() == -1 ? sheet.createRow(0) : sheet.createRow(sheet.getLastRowNum() + 1);
         Cell cell = headerRow.createCell(order);
         Font font = sheet.getWorkbook().createFont();
         CellStyle style = sheet.getWorkbook().createCellStyle();
