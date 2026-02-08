@@ -34,6 +34,7 @@ public class InitiateExcelStructure extends ConditionalMarker {
     private final List<Structure> structures = new ArrayList<>();
     private final List<Children> children = new ArrayList<>();
     private final Elements elements;
+    private final com.datashepherd.excel.annotation.Sheet sheetAttributes;
     public static final BiConsumer<Cell,Object> TEXT = (cell,value) -> cell.setCellValue((String) value);
 
     public static final BiConsumer<Cell,Object> INTEGER = (cell,value) -> cell.setCellValue((Integer) value);
@@ -72,10 +73,11 @@ public class InitiateExcelStructure extends ConditionalMarker {
         }
     }
 
-    public InitiateExcelStructure(final Registry registry, Workbook workbook, final Sheet sheet, final Class<?> clazz) {
+    public InitiateExcelStructure(final Registry registry, Workbook workbook, final Sheet sheet, final Class<?> clazz, com.datashepherd.excel.annotation.Sheet sheetAttributes) {
         super(registry, workbook, sheet);
         registryChildren(clazz);
         registryColorConditional(clazz);
+        this.sheetAttributes = sheetAttributes;
         if(Stream.of(clazz.getDeclaredFields()).filter(field -> field.isAnnotationPresent(ExcelColumn.class))
                 .allMatch(field -> field.getAnnotation(ExcelColumn.class).position()==0))
         {
@@ -156,7 +158,7 @@ public class InitiateExcelStructure extends ConditionalMarker {
     }
 
     private void createHeaderCell(Field field, int order, ExcelColumn column) {
-        Row headerRow = sheet.getLastRowNum() == -1 ? sheet.createRow(0) : sheet.createRow(sheet.getLastRowNum() + 1);
+        Row headerRow = sheet.getLastRowNum() == -1 ? sheet.createRow(0) : sheet.createRow(this.sheetAttributes.headerRow());
         Cell cell = headerRow.createCell(order);
         Font font = sheet.getWorkbook().createFont();
         CellStyle style = sheet.getWorkbook().createCellStyle();
