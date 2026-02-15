@@ -14,7 +14,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 public class CommentHelper extends Anchor {
     private static CommentHelper instance = null;
     public static synchronized CommentHelper getInstance(Sheet sheet){
-        if(instance == null) instance = new CommentHelper(sheet);
+        if (instance == null || instance.sheet != sheet) instance = new CommentHelper(sheet);
         return instance;
     }
     private CommentHelper(Sheet sheet) {
@@ -23,6 +23,7 @@ public class CommentHelper extends Anchor {
     }
     public void writeComment(Cell cell, String text){
         if(StringUtils.isBlank(text)) return;
+        if (cell.getCellComment() != null) return;
         clientAnchor.setCol1(cell.getColumnIndex());
         clientAnchor.setCol2(Math.addExact(cell.getColumnIndex() , 1));
         clientAnchor.setRow1(cell.getRow().getRowNum());

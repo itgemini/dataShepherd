@@ -3,15 +3,15 @@
  */
 package com.datashepherd.excel.helper.writer.style;
 
-import com.datashepherd.excel.helper.writer.style.condional.BackgroundColorCondition;
-import com.datashepherd.excel.helper.writer.style.condional.ColorCondition;
-import com.datashepherd.excel.helper.writer.style.condional.Conditional;
+import java.util.Objects;
+
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.IndexedColors;
-
-import java.util.Objects;
+import com.datashepherd.excel.helper.writer.style.condional.BackgroundColorCondition;
+import com.datashepherd.excel.helper.writer.style.condional.ColorCondition;
+import com.datashepherd.excel.helper.writer.style.condional.Conditional;
 
 public interface ConditionalCellStyleHandler extends Conditional {
     default <T> void createConditionalCellStyle(ColorCondition colorCondition, T fieldValue, Font font) {

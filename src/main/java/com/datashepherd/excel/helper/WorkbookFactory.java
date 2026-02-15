@@ -4,14 +4,19 @@
 package com.datashepherd.excel.helper;
 
 
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import java.io.InputStream;
+
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.util.IOUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import static com.datashepherd.excel.helper.WorkbookType.SXSSF;
 
 public class WorkbookFactory {
+    static {
+        // Set higher limit for large records in Apache POI (e.g. 512MB)
+        IOUtils.setByteArrayMaxOverride(512 * 1024 * 1024);
+    }
     private WorkbookFactory(){}
     public static Workbook createWorkbook(WorkbookType workbookType) throws ReflectiveOperationException {
         String className = workbookType.getClassName();

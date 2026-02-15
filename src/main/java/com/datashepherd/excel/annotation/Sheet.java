@@ -55,6 +55,8 @@ public @interface Sheet {
      */
     int skipHeader() default 0;
 
+    int headerRow() default 0;
+
     /**
      * Specifies the path to the image.
      * Positioning is required, including start and end columns and rows.

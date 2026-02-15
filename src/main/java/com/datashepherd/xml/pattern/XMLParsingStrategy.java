@@ -1,11 +1,11 @@
 package com.datashepherd.xml.pattern;
 
-import com.datashepherd.xml.exception.XMLAPIException;
-import com.datashepherd.xml.exception.XMLIssueReport;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+
+import com.datashepherd.xml.exception.XMLAPIException;
+import com.datashepherd.xml.exception.XMLIssueReport;
 
 /**
  * Strategy interface for XML parsing.

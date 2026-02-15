@@ -1,11 +1,11 @@
 package com.datashepherd.pdf.annotation;
 
-import com.datashepherd.pdf.enums.PdfFieldType;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import com.datashepherd.pdf.enums.PdfFieldType;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

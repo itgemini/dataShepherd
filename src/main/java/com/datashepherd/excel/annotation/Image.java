@@ -4,12 +4,12 @@
 package com.datashepherd.excel.annotation;
 
 
-import com.datashepherd.excel.enums.ImageType;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import com.datashepherd.excel.enums.ImageType;
 /**
  * When the field is an image data,
  * the Field should be of type byte[]

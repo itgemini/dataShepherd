@@ -3,12 +3,12 @@
  */
 package com.datashepherd.excel.helper.writer.style;
 
-import com.datashepherd.excel.annotation.style.Font;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.IndexedColors;
-
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import com.datashepherd.excel.annotation.style.Font;
 
 interface FontStyle {
 

@@ -4,15 +4,15 @@
 package com.datashepherd.excel.annotation;
 
 
-import com.datashepherd.excel.annotation.style.ExcelStyle;
-import com.datashepherd.excel.annotation.style.Font;
-import com.datashepherd.excel.enums.Color;
-import org.apache.poi.ss.usermodel.FillPatternType;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import org.apache.poi.ss.usermodel.FillPatternType;
+import com.datashepherd.excel.annotation.style.ExcelStyle;
+import com.datashepherd.excel.annotation.style.Font;
+import com.datashepherd.excel.enums.Color;
 
 
 /**

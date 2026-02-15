@@ -3,17 +3,22 @@
  */
 package com.datashepherd.excel.service;
 
-import com.datashepherd.excel.exception.WorkbookException;
-import com.datashepherd.excel.helper.WorkbookFactory;
-import com.datashepherd.excel.helper.WorkbookType;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Objects;
+import java.util.Optional;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Workbook;
-
-import java.io.*;
-import java.util.InvalidPropertiesFormatException;
-import java.util.Objects;
-import java.util.Optional;
+import com.datashepherd.excel.exception.WorkbookException;
+import com.datashepherd.excel.helper.WorkbookFactory;
+import com.datashepherd.excel.helper.WorkbookType;
 
 class ExcelService {
     protected Workbook workbook;
@@ -34,11 +39,10 @@ class ExcelService {
      *                           in a WorkbookException with details of the underlying cause.
      */
     protected void xlsxWork(InputStream template) {
-        try {
-            if(Objects.isNull(template)) throw new InvalidPropertiesFormatException("template input should not be null");
+        if (Objects.isNull(template)) throw new WorkbookException("template input should not be null");
+        try (template) {
             type = WorkbookType.XSSF;
             workbook = WorkbookFactory.createWorkbook(WorkbookType.XSSF,template);
-            template.close();
         } catch (ReflectiveOperationException | IOException e) {
             throw new WorkbookException("Error creating XSSFWorkbook instance with the template input stream",e);
         }
@@ -59,12 +63,10 @@ class ExcelService {
      *                           issues related to file access or internal errors during workbook initialization.
      */
     protected void xlsxWork(String template) {
-        try {
-            if(Objects.isNull(template)) throw new InvalidPropertiesFormatException("template input should not be null");
-            InputStream inputStream = new FileInputStream(template);
+        if (Objects.isNull(template)) throw new WorkbookException("template input should not be null");
+        try (InputStream inputStream = new FileInputStream(template)) {
             type = WorkbookType.XSSF;
             workbook = WorkbookFactory.createWorkbook(WorkbookType.XSSF, inputStream);
-            inputStream.close();
         } catch (ReflectiveOperationException | IOException e) {
             throw new WorkbookException("Error creating XSSFWorkbook instance with the template input stream",e);
         }
@@ -85,11 +87,9 @@ class ExcelService {
      *                           including the path to the problematic template file for easier troubleshooting.
      */
     protected void xlsWork(String templatePath) {
-        try {
-            InputStream inputStream = new FileInputStream(templatePath);
+        try (InputStream inputStream = new FileInputStream(templatePath)) {
             type = WorkbookType.HSSF;
             workbook = WorkbookFactory.createWorkbook(WorkbookType.HSSF,inputStream);
-            inputStream.close();
         } catch (ReflectiveOperationException | IOException e) {
             throw new WorkbookException("Error creating HSSFWorkbook instance with templatePath ".concat(templatePath),e);
         }
@@ -106,10 +106,9 @@ class ExcelService {
      * @throws WorkbookException If a ReflectiveOperationException occurs during the creation of the HSSFWorkbook instance.
      */
     protected void xlsWork(InputStream template) {
-        try {
+        try (template) {
             type = WorkbookType.HSSF;
             workbook = WorkbookFactory.createWorkbook(WorkbookType.HSSF,template);
-            template.close();
         } catch (ReflectiveOperationException | IOException e) {
             throw new WorkbookException("Error creating HSSFWorkbook instance with template",e);
         }

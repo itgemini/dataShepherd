@@ -3,6 +3,18 @@
  */
 package com.datashepherd.excel.service;
 
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import com.datashepherd.excel.annotation.Cell;
 import com.datashepherd.excel.annotation.Image;
 import com.datashepherd.excel.annotation.Sheet;
@@ -10,25 +22,23 @@ import com.datashepherd.excel.exception.WorkbookException;
 import com.datashepherd.excel.exception.WriteException;
 import com.datashepherd.excel.helper.WorkbookFactory;
 import com.datashepherd.excel.helper.WorkbookType;
-import com.datashepherd.excel.helper.writer.model.FormatHandler;
-import com.datashepherd.excel.helper.writer.style.ExcelStyleHandler;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import com.datashepherd.excel.helper.writer.model.ExcelStyleManager;
+import com.datashepherd.excel.helper.writer.model.WritingContext;
+import com.datashepherd.excel.helper.writer.style.condional.Registry;
 
-import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
-import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.*;
+import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.BOOLEAN;
+import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.DATE;
+import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.DOUBLE;
+import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.FLOAT;
+import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.IMAGE;
+import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.INTEGER;
+import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.LOCAL_DATE;
+import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.LOCAL_DATE_TIME;
+import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.LONG;
+import static com.datashepherd.excel.helper.writer.InitiateExcelStructure.TEXT;
 import static com.datashepherd.excel.service.Writer.MESSAGE;
 
-public class WriterService extends ExcelService implements ExcelStyleHandler {
+public class WriterService extends ExcelService {
     /**
      * Initializes the workbook with a template provided as an InputStream for XLSX format files.
      * This method sets the workbook type to XSSF and creates a new workbook instance based on the provided template InputStream.
@@ -203,7 +213,8 @@ public class WriterService extends ExcelService implements ExcelStyleHandler {
                 Row row = Optional.ofNullable(sheet.getRow(cell.row())).orElseGet(()->sheet.createRow(cell.row()));
                 org.apache.poi.ss.usermodel.Cell cellC = Optional.ofNullable(row.getCell(cell.column())).orElseGet(()->row.createCell(cell.column()));
                 setInfo(cellC,field,template);
-                style(FormatHandler.getInstance(workbook),workbook,field,cellC,cell.format());
+                ExcelStyleManager styleManager = WritingContext.of(workbook, sheet, new Registry()).styleManager();
+                cellC.setCellStyle(styleManager.getOrCreateStyle(field.getAnnotation(com.datashepherd.excel.annotation.style.ExcelStyle.class), cell.format()));
             } else {
                 Row row = Optional.ofNullable(sheet.getRow(cell.firstRow())).orElseGet(()->sheet.createRow(cell.firstRow()));
                 Optional.ofNullable(sheet.getRow(cell.lastRow())).orElseGet(()->sheet.createRow(cell.lastRow()));
@@ -212,7 +223,8 @@ public class WriterService extends ExcelService implements ExcelStyleHandler {
                 CellRangeAddress cellAddresses = new CellRangeAddress(cell.firstRow(),cell.lastRow(),cell.firstColumn(),cell.lastColumn());
                 sheet.addMergedRegionUnsafe(cellAddresses);
                 setInfo(cellC,field,template);
-                style(FormatHandler.getInstance(workbook),workbook,field,cellC,cell.format());
+                ExcelStyleManager styleManager = WritingContext.of(workbook, sheet, new Registry()).styleManager();
+                cellC.setCellStyle(styleManager.getOrCreateStyle(field.getAnnotation(com.datashepherd.excel.annotation.style.ExcelStyle.class), cell.format()));
             }
         }
     }
@@ -228,7 +240,12 @@ public class WriterService extends ExcelService implements ExcelStyleHandler {
             case "java.time.LocalDate" -> LOCAL_DATE.accept(cellC,field.get(template));
             case "java.time.LocalDateTime" -> LOCAL_DATE_TIME.accept(cellC,field.get(template));
             case "java.lang.String" -> TEXT.accept(cellC,field.get(template));
-            case "java.lang.Byte[]","byte[]","[B" -> IMAGE.accept(cellC,field.isAnnotationPresent(Image.class)? Pair.of(field.getAnnotation(Image.class),field.get(template)):field.get(template));
+            case "java.lang.Byte[]", "byte[]", "[B" -> {
+                Object val = field.get(template);
+                if (val != null) {
+                    IMAGE.accept(cellC, field.isAnnotationPresent(Image.class) ? Pair.of(field.getAnnotation(Image.class), val) : val);
+                }
+            }
             default -> throw new IllegalStateException("Unexpected value: " + field.getType().getName());
         }
     }

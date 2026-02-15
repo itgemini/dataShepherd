@@ -1,11 +1,11 @@
 package com.datashepherd.xml.helper;
 
+import java.io.File;
+import java.io.InputStream;
+
 import com.datashepherd.xml.exception.XMLAPIException;
 import com.datashepherd.xml.pattern.XMLCommand;
 import com.datashepherd.xml.pattern.XMLParsingStrategy;
-
-import java.io.File;
-import java.io.InputStream;
 
 /**
  * Command for reading XML using a given parsing strategy.

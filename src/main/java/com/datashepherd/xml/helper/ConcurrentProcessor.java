@@ -1,5 +1,35 @@
 package com.datashepherd.xml.helper;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
+import javax.xml.stream.Location;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.EndElement;
+import javax.xml.stream.events.StartElement;
+import javax.xml.stream.events.XMLEvent;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import com.datashepherd.xml.annotation.XMLAttribute;
 import com.datashepherd.xml.annotation.XMLElement;
 import com.datashepherd.xml.annotation.XMLRoot;
@@ -8,26 +38,13 @@ import com.datashepherd.xml.exception.Issue;
 import com.datashepherd.xml.exception.XMLAPIException;
 import com.datashepherd.xml.exception.XMLIssueReport;
 import com.datashepherd.xml.pattern.XMLObjectFactory;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import javax.xml.stream.Location;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.Attribute;
-import javax.xml.stream.events.EndElement;
-import javax.xml.stream.events.StartElement;
-import javax.xml.stream.events.XMLEvent;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Stream;
-
-import static com.datashepherd.xml.exception.IssueKey.*;
+import static com.datashepherd.xml.exception.IssueKey.ATTRIBUTES_ERROR;
+import static com.datashepherd.xml.exception.IssueKey.FIELD;
+import static com.datashepherd.xml.exception.IssueKey.MISSING_ATTRIBUTES;
+import static com.datashepherd.xml.exception.IssueKey.ROOT_OBJECT;
+import static com.datashepherd.xml.exception.IssueKey.VALUE;
+import static com.datashepherd.xml.exception.IssueKey.XML_PARSING_ERROR;
 
 public class ConcurrentProcessor<T> {
 

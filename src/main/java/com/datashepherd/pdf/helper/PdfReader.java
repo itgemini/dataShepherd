@@ -1,12 +1,12 @@
 package com.datashepherd.pdf.helper;
 
 
-import com.datashepherd.pdf.PDFException;
+import java.io.FileInputStream;
+
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-
-import java.io.FileInputStream;
+import com.datashepherd.pdf.PDFException;
 
 public class PdfReader {
     private PdfReader() {

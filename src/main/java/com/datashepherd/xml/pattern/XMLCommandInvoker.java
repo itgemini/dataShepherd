@@ -1,9 +1,9 @@
 package com.datashepherd.xml.pattern;
 
-import com.datashepherd.xml.exception.XMLAPIException;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.datashepherd.xml.exception.XMLAPIException;
 
 /**
  * Invoker for XML commands following the Command design pattern.

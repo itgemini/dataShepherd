@@ -1,15 +1,15 @@
 package com.datashepherd.xml.pattern;
 
-import com.datashepherd.xml.exception.XMLAPIException;
-import com.datashepherd.xml.exception.XMLIssueReport;
-import com.datashepherd.xml.helper.ConcurrentProcessor;
-
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+
+import com.datashepherd.xml.exception.XMLAPIException;
+import com.datashepherd.xml.exception.XMLIssueReport;
+import com.datashepherd.xml.helper.ConcurrentProcessor;
 
 /**
  * Concrete implementation of XMLParsingStrategy using SAXParser.

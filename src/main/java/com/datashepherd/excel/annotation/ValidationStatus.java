@@ -4,12 +4,12 @@
 package com.datashepherd.excel.annotation;
 
 
-import com.datashepherd.excel.helper.writer.style.condional.DataStatusCondition;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import com.datashepherd.excel.helper.writer.style.condional.DataStatusCondition;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

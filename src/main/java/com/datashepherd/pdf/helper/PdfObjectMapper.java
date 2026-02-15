@@ -1,15 +1,15 @@
 package com.datashepherd.pdf.helper;
 
-import com.datashepherd.pdf.PDFException;
-import com.datashepherd.pdf.annotation.PdfField;
-import com.datashepherd.pdf.annotation.PdfTable;
-import com.datashepherd.pdf.annotation.PdfZone;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+
+import com.datashepherd.pdf.PDFException;
+import com.datashepherd.pdf.annotation.PdfField;
+import com.datashepherd.pdf.annotation.PdfTable;
+import com.datashepherd.pdf.annotation.PdfZone;
 
 public class PdfObjectMapper {
     private PdfObjectMapper() {

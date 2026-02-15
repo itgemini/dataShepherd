@@ -3,11 +3,11 @@
  */
 package com.datashepherd.excel.service;
 
-import com.datashepherd.excel.exception.WorkbookException;
-
 import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import com.datashepherd.excel.exception.WorkbookException;
 
 public class ReaderService extends ExcelService {
     /**
@@ -97,7 +97,7 @@ public class ReaderService extends ExcelService {
      * @param <T>         The type of the data to be read from the Excel workbook.
      * @param entityClass The class of the data type T, used for reflection in the Reader class to instantiate objects of type T.
      * @return a live ConcurrentLinkedQueue suitable for real-time processing,
-     * parallel consumers, or queue-style operations.
+     * parallel consumers, or queue-applyFormatAndStyles operations.
      * @throws WorkbookException If the workbook has not been set prior to calling this method.
      */
     public <T> ConcurrentLinkedQueue<T> readFromExcelAsync(Class<T> entityClass) {

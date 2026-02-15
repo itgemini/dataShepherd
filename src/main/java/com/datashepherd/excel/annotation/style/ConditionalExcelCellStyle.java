@@ -4,15 +4,15 @@
 package com.datashepherd.excel.annotation.style;
 
 
-import com.datashepherd.excel.helper.writer.style.condional.BackgroundColorCondition;
-import com.datashepherd.excel.helper.writer.style.condional.ColorCondition;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import com.datashepherd.excel.helper.writer.style.condional.BackgroundColorCondition;
+import com.datashepherd.excel.helper.writer.style.condional.ColorCondition;
 /**
- * ConditionalExcelCellStyle is an annotation used to define the conditional style of a cell in an Excel sheet based on a condition.
+ * ConditionalExcelCellStyle is an annotation used to define the conditional applyFormatAndStyles of a cell in an Excel sheet based on a condition.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})

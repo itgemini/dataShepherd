@@ -3,9 +3,10 @@
  */
 package com.datashepherd.excel.helper.writer;
 
-import com.datashepherd.excel.helper.Children;
-
 import java.util.List;
 
-public record Elements(List<Structure> structures, List<Children> children, List<Conditional> conditional) {
+import com.datashepherd.excel.helper.Children;
+
+public record Elements(List<Structure> structures, List<Children> children, List<Conditional> conditional,
+                       int headerRow) {
 }

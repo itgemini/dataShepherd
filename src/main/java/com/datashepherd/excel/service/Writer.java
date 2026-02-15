@@ -3,28 +3,34 @@
  */
 package com.datashepherd.excel.service;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import com.datashepherd.excel.annotation.ExcelColumn;
 import com.datashepherd.excel.annotation.Image;
 import com.datashepherd.excel.annotation.Sheet;
 import com.datashepherd.excel.annotation.style.ExcelStyle;
 import com.datashepherd.excel.exception.WorkbookException;
+import com.datashepherd.excel.helper.ExcelMetadataReader;
 import com.datashepherd.excel.helper.writer.Elements;
 import com.datashepherd.excel.helper.writer.InitiateExcelStructure;
-import com.datashepherd.excel.helper.writer.model.FormatHandler;
 import com.datashepherd.excel.helper.writer.model.SheetPictureHandler;
-import com.datashepherd.excel.helper.writer.style.ExcelStyleHandler;
+import com.datashepherd.excel.helper.writer.model.WritingContext;
 import com.datashepherd.excel.helper.writer.style.condional.Registry;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Writer class extends Excel class and is responsible for writing data to an Excel sheet.
@@ -32,16 +38,17 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type of objects that this writer will write to the Excel sheet.
  */
-public class Writer<T>  implements ExcelStyleHandler {
+public class Writer<T> {
     private final Workbook workbook;
     private final Elements elements;
-    private org.apache.poi.ss.usermodel.Sheet sheet;
+    private final org.apache.poi.ss.usermodel.Sheet sheet;
     private final List<T> sources;
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public static final String MESSAGE = "Failed write the value of the field : {0}";
     private final Registry registry;
-    private final FormatHandler formatHandler;
     private final Map<Class<Object>,List<Object>> writers = new ConcurrentHashMap<>();
+    private final WritingContext context;
+
     /**
      * Constructor for the Writer class.
      *
@@ -52,15 +59,20 @@ public class Writer<T>  implements ExcelStyleHandler {
         this.registry = new Registry();
         this.sources = Collections.synchronizedList(sources);
         this.workbook = workbook;
+        Sheet sheetAttributes = ExcelMetadataReader.getSheetAnnotation(entityClass);
+        this.sheet = sheet(StringUtils.isBlank(sheetAttributes.name()) ? entityClass.getSimpleName() : sheetAttributes.name());
+        this.context = WritingContext.of(workbook, sheet, registry);
         this.elements = header(entityClass);
-        this.formatHandler = FormatHandler.getInstance(workbook);
     }
 
     /**
      * Writes the data from the sources to the Excel sheet.
      */
+    /**
+     * Internal write method to process rows and handle master-detail relationships.
+     */
     protected void write() {
-        sources.forEach(source -> writeLine(source, sheet.createRow(sheet.getLastRowNum() + 1)));
+        sources.forEach(source -> writeLine(source, sheet.createRow(sheet.getLastRowNum() == -1 ? elements.headerRow() + 1 : sheet.getLastRowNum() + 1)));
         registry.execute();
         registry.clear();
         sources.clear();
@@ -72,7 +84,13 @@ public class Writer<T>  implements ExcelStyleHandler {
         writers.clear();
     }
 
+    /**
+     * Returns the internal map of writers for child entities.
+     *
+     * @return the map of writers.
+     */
     protected Map<Class<Object>,List<Object>> getWriters(){return writers;}
+
     /**
      * Returns the sheet with the given name. If the sheet does not exist, a new one is created.
      *
@@ -129,15 +147,13 @@ public class Writer<T>  implements ExcelStyleHandler {
     }
 
     /**
-     * Returns the elements of the header of the sheet.
+     * Initializes the sheet, sets headers and footers, and sets up the Excel structure.
      *
      * @param entityClass  the class of the objects to be written to the Excel sheet.
      * @return             the elements of the header of the sheet.
      */
     private Elements header(Class<T> entityClass) {
-        Sheet sheetAttributes = entityClass.getAnnotation(Sheet.class);
-        if (Objects.isNull(sheetAttributes)) throw new UnsupportedOperationException("unsupported class that not use the Sheet annotation");
-        sheet = sheet(StringUtils.isBlank(sheetAttributes.name()) ? entityClass.getSimpleName() : sheetAttributes.name());
+        Sheet sheetAttributes = ExcelMetadataReader.getSheetAnnotation(entityClass);
         if(!(workbook instanceof SXSSFWorkbook)) {
             sheetHeader(sheetAttributes.centerHeader(), Position.CENTER, sheet);
             sheetHeader(sheetAttributes.leftHeader(), Position.LEFT, sheet);
@@ -152,41 +168,59 @@ public class Writer<T>  implements ExcelStyleHandler {
                 sheet.setDefaultColumnWidth(structure.order());
             }));
         }
-        return new InitiateExcelStructure(registry, workbook, Objects.requireNonNull(sheet), entityClass).getElements();
+        return new InitiateExcelStructure(context, entityClass).getElements();
     }
 
     /**
-     * Writes a line to the Excel sheet.
-     * @param o         the object to be written to the Excel sheet.
-     * @param cells     the cells of the row where the line is to be written.
+     * Writes a single object as a row to the Excel sheet and processes child entities.
+     * @param o         the object to be written.
+     * @param cells     the row where the data will be written.
      */
     protected void writeLine(Object o, org.apache.poi.ss.usermodel.Row cells) {
         processElements(o,cells);
         processChild(o);
     }
 
+    /**
+     * Processes the fields of an object and writes them to the specified row cells.
+     *
+     * @param o     the object to process.
+     * @param cells the Excel row.
+     */
     private void processElements(Object o, org.apache.poi.ss.usermodel.Row cells) {
         var clazz = o.getClass();
-        elements.structures().forEach(structure -> {
+        for (var structure : elements.structures()) {
+            String name = structure.name();
+            Integer order = structure.order();
+            var processor = structure.processor();
             try {
-                Field field = clazz.getDeclaredField(structure.name());
+                Field field = clazz.getDeclaredField(name);
                 field.setAccessible(true);
                 var value = field.get(o);
-                var cell = cells.createCell(structure.order());
-                structure.processor().accept(cell, field.isAnnotationPresent(Image.class)? Pair.of(field.getAnnotation(Image.class),value):value);
+                var cell = cells.createCell(order);
+                processor.accept(cell, field.isAnnotationPresent(Image.class) ? Pair.of(field.getAnnotation(Image.class), value) : value);
                 elements.conditional().stream()
-                        .filter(conditional -> conditional.name().equals(structure.name()))
+                        .filter(conditional -> conditional.name().equals(name))
                         .forEach(conditional -> conditional.processor().accept(cell, value));
                 ExcelColumn column = field.getAnnotation(ExcelColumn.class);
-                if ((StringUtils.isNotBlank(Objects.requireNonNull(column).format()) || field.isAnnotationPresent(ExcelStyle.class))) {
-                registry.onBefore(() -> style(formatHandler,workbook,field,cell,column.format()));
+                if (Objects.nonNull(column) && (StringUtils.isNotBlank(column.format()) || field.isAnnotationPresent(ExcelStyle.class))) {
+                    registry.onBefore(() -> {
+                        CellStyle style = context.styleManager()
+                                                 .getOrCreateStyle(field.getAnnotation(ExcelStyle.class), column.format());
+                        cell.setCellStyle(style);
+                    });
                 }
             } catch (NoSuchFieldException | IllegalAccessException e) {
-                logger.log(Level.WARNING, MESSAGE, structure.name());
+                logger.log(Level.WARNING, MESSAGE, name);
             }
-        });
+        }
     }
 
+    /**
+     * Processes child entities for master-detail relationships.
+     *
+     * @param o the parent object.
+     */
     @SuppressWarnings("unchecked")
     private void processChild(Object o){
         var clazz = o.getClass();

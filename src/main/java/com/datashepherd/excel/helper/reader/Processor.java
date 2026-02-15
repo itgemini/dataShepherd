@@ -4,19 +4,25 @@
 package com.datashepherd.excel.helper.reader;
 
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Workbook;
 import com.datashepherd.excel.annotation.Parent;
 import com.datashepherd.excel.exception.ReadException;
 import com.datashepherd.excel.helper.Children;
 import com.datashepherd.excel.service.Reader;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.Workbook;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Processor<T> {
 
@@ -31,84 +37,57 @@ public class Processor<T> {
     }
 
     public void processChild(ConcurrentLinkedQueue<T> parents) {
-        for (Children children : subs) {
-            ConcurrentLinkedQueue<?> list = new Reader<>(workbook, children.mappedBy()).read();
-            for (T parent : parents) {
-                try {
-                    processSingleChild(parent, children, list);
-                } catch (ReadException e) {
-                    throw new ReadException("Failed to process child", e);
+        for (Children childEntry : subs) {
+            ConcurrentLinkedQueue<?> allChildren = new Reader<>(workbook, childEntry.mappedBy()).read();
+            try {
+                Field referencedByField = childEntry.mappedBy().getDeclaredField(childEntry.referencedBy());
+                referencedByField.setAccessible(true);
+                Field mapperField = entityClass.getDeclaredField(childEntry.name());
+                mapperField.setAccessible(true);
+                String parentRefName = Optional.ofNullable(referencedByField.getAnnotation(Parent.class))
+                                               .orElseThrow(() -> new ReadException("Missing Parent annotation on the child class"))
+                                               .reference();
+                Field parentRefField = entityClass.getDeclaredField(parentRefName);
+                parentRefField.setAccessible(true);
+
+                // Index children by their parent reference value
+                Map<Object, List<Object>> childrenByParentId = allChildren.stream()
+                                                                          .collect(Collectors.groupingBy(child -> {
+                                                                              try {
+                                                                                  return referencedByField.get(child);
+                                                                              }
+                                                                              catch (IllegalAccessException e) {
+                                                                                  throw new ReadException("Failed to read child reference", e);
+                                                                              }
+                                                                          }));
+
+                for (T parent : parents) {
+                    Object parentId = parentRefField.get(parent);
+                    List<Object> filteredChildren = childrenByParentId.getOrDefault(parentId, Collections.emptyList());
+
+                    if (Collection.class.isAssignableFrom(mapperField.getType())) {
+                        Collection<Object> targetCollection;
+                        if (Set.class.isAssignableFrom(mapperField.getType())) {
+                            targetCollection = new HashSet<>(filteredChildren);
+                        }
+                        else {
+                            targetCollection = new ArrayList<>(filteredChildren);
+                        }
+                        invokeSetter(parent, childEntry, targetCollection, mapperField);
+                    }
+                    else if (!filteredChildren.isEmpty()) {
+                        invokeSetter(parent, childEntry, filteredChildren.getFirst(), mapperField);
+                    }
                 }
             }
-        }
-    }
-
-    private void processSingleChild(T parent, Children children, ConcurrentLinkedQueue<?> list) throws ReadException {
-        try {
-            Field mapper = entityClass.getDeclaredField(children.name());
-            Field referencedBy = getReferencedByField(children);
-            String reference = getReferenceAnnotation(referencedBy).reference();
-            Field parentField = getAccessibleField(reference);
-
-            if (Collection.class.isAssignableFrom(mapper.getType()) || List.class.isAssignableFrom(mapper.getType())) {
-                setCollectionField(parent, children, list, referencedBy, parentField,mapper);
-            } else {
-                setSingleField(parent, children, list, referencedBy, parentField,mapper);
+            catch (Exception e) {
+                throw new ReadException("Failed to process child relationship: " + childEntry.name(), e);
             }
-        } catch (Exception e) {
-            throw new ReadException("Failed to read child field", e);
-        }
-    }
-
-    private Field getReferencedByField(Children children) throws NoSuchFieldException {
-        Field referencedBy = children.mappedBy().getDeclaredField(children.referencedBy());
-        referencedBy.setAccessible(true);
-        return referencedBy;
-    }
-
-    private Parent getReferenceAnnotation(Field referencedBy) throws ReadException {
-        return Optional.ofNullable(referencedBy.getAnnotation(Parent.class))
-                .orElseThrow(() -> new ReadException("Missing Parent annotation on the child class"));
-    }
-
-    private Field getAccessibleField(String reference) throws NoSuchFieldException {
-        Field parentField = entityClass.getDeclaredField(reference);
-        parentField.setAccessible(true);
-        return parentField;
-    }
-
-    private void setCollectionField(T parent, Children children, Collection<?> list, Field referencedBy, Field parentField, Field mapper) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-        Collection<?> filteredList = filterList(list, referencedBy, parentField, parent,mapper);
-        invokeSetter(parent, children, filteredList,mapper);
-    }
-
-    private void setSingleField(T parent, Children children, Collection<?> list, Field referencedBy, Field parentField, Field mapper) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-        Optional<?> child = filterList(list, referencedBy, parentField, parent, mapper).stream().findAny();
-        if (child.isPresent()) {
-            invokeSetter(parent, children, child.get(), mapper);
-        }
-    }
-
-    private Collection<?> filterList(Collection<?> list, Field referencedBy, Field parentField, T parent, Field mapper) {
-        Stream<?> abstractCollection = list.stream()
-                .filter(child -> {
-                    try {
-                        return Objects.equals(parentField.get(parent), referencedBy.get(child));
-                    } catch (IllegalAccessException e) {
-                        throw new ReadException("Failed to read child referencedBy", e);
-                    }
-                });
-        if (Set.class.isAssignableFrom(mapper.getType())) {
-            return abstractCollection.collect(Collectors.toCollection(HashSet::new));
-        } else if (List.class.isAssignableFrom(mapper.getType())) {
-            return abstractCollection.collect(Collectors.toCollection(ArrayList::new));
-        } else {
-            throw new IllegalArgumentException("Unsupported collection type: " + mapper.getType());
         }
     }
 
     private void invokeSetter(T parent, Children children, Object value, Field mapper) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        entityClass.getDeclaredMethod("set".concat(StringUtils.capitalize(children.name())), Class.forName(mapper.getType().getName()))
+        entityClass.getDeclaredMethod("set".concat(StringUtils.capitalize(children.name())), mapper.getType())
                 .invoke(parent, value);
     }
 }
